@@ -1,0 +1,259 @@
+[
+  {
+    "literal": "burns when i pee",
+    "category": "symptom",
+    "pattern": [
+      { "lower": "burns" },
+      { "lower": "when" },
+      { "lower": "i" },
+      { "lower": "pee" }
+    ]
+  },
+
+  {
+    "literal": "burning when urinating",
+    "category": "symptom",
+    "pattern": [
+      { "lower": "burning" },
+      { "lower": "when" },
+      { "lower": "urinating" }
+    ]
+    
+  },
+
+  {
+    "literal": "painful urination",
+    "category": "symptom",
+    "pattern": [{ "lower": "painful" }, { "lower": "urination" }]
+  },
+
+  {
+    "literal": "burning",
+    "category": "symptom",
+    "pattern": [{ "lower": "burning" }]
+  },
+
+  {
+    "literal": "burn",
+    "category": "symptom",
+    "pattern": [{ "lower": "burn" }]
+  },
+
+  {
+    "literal": "discharge",
+    "category": "symptom",
+    "pattern": [{ "lower": "discharge" }]
+  },
+
+  {
+    "literal": "thin discharge",
+    "category": "symptom",
+    "pattern": [{ "lower": "thin" }, { "lower": "discharge" }]
+  },
+
+  {
+    "literal": "thick discharge",
+    "category": "symptom",
+    "pattern": [{ "lower": "thick" }, { "lower": "discharge" }]
+  },
+
+  {
+    "literal": "yellow discharge",
+    "category": "symptom",
+    "pattern": [{ "lower": "yellow" }, { "lower": "discharge" }]
+  },
+
+  {
+    "literal": "green discharge",
+    "category": "symptom",
+    "pattern": [{ "lower": "green" }, { "lower": "discharge" }]
+  },
+
+  {
+    "literal": "fishy smell",
+    "category": "symptom",
+    "pattern": [{ "lower": "fishy" }, { "lower": "smell" }]
+  },
+
+  {
+    "literal": "fishy odor",
+    "category": "symptom",
+    "pattern": [{ "lower": "fishy" }, { "lower": "odor" }]
+  },
+
+  {
+    "literal": "bad smell",
+    "category": "symptom",
+    "pattern": [{ "lower": "bad" }, { "lower": "smell" }]
+  },
+
+  {
+    "literal": "abdominal pain",
+    "category": "symptom",
+    "pattern": [{ "lower": "abdominal" }, { "lower": "pain" }]
+  },
+
+  {
+    "literal": "stomach hurt",
+    "category": "symptom",
+    "pattern": [{ "lower": "stomach" }, { "lower": "hurt" }]
+  },
+
+  {
+    "literal": "pelvic pain",
+    "category": "symptom",
+    "pattern": [{ "lower": "pelvic" }, { "lower": "pain" }]
+  },
+
+  {
+    "literal": "ulcers",
+    "category": "symptom",
+    "pattern": [{ "lower": "ulcers" }]
+  },
+
+  {
+    "literal": "painful sores",
+    "category": "symptom",
+    "pattern": [{ "lower": "painful" }, { "lower": "sores" }]
+  },
+
+  {
+    "literal": "painless sore",
+    "category": "symptom",
+    "pattern": [{ "lower": "painless" }, { "lower": "sore" }]
+  },
+
+  {
+    "literal": "chancre",
+    "category": "symptom",
+    "pattern": [{ "lower": "chancre" }]
+  },
+
+  {
+    "literal": "blisters",
+    "category": "symptom",
+    "pattern": [{ "lower": "blisters" }]
+  },
+
+  {
+    "literal": "genital blisters",
+    "category": "symptom",
+    "pattern": [{ "lower": "genital" }, { "lower": "blisters" }]
+  },
+
+  {
+    "literal": "sores",
+    "category": "symptom",
+    "pattern": [{ "lower": "sores" }]
+  },
+
+  {
+    "literal": "itching",
+    "category": "symptom",
+    "pattern": [{ "lower": "itching" }]
+  },
+
+  {
+    "literal": "itch",
+    "category": "symptom",
+    "pattern": [{ "lower": "itch" }]
+  },
+
+  {
+    "literal": "pee a lot",
+    "category": "symptom",
+    "pattern": [{ "lower": "pee" }, { "lower": "a" }, { "lower": "lot" }]
+  },
+
+  {
+    "literal": "frequent urination",
+    "category": "symptom",
+    "pattern": [{ "lower": "frequent" }, { "lower": "urination" }]
+  },
+
+  {
+    "literal": "urgency",
+    "category": "symptom",
+    "pattern": [{ "lower": "urgency" }]
+  },
+
+  {
+    "literal": "urgent urination",
+    "category": "symptom",
+    "pattern": [{ "lower": "urgent" }, { "lower": "urination" }]
+  },
+
+  {
+    "literal": "spotting",
+    "category": "symptom",
+    "pattern": [{ "lower": "spotting" }]
+  },
+
+  {
+    "literal": "bleeding",
+    "category": "symptom",
+    "pattern": [{ "lower": "bleeding" }]
+  },
+
+  {
+    "literal": "bleeding between periods",
+    "category": "symptom",
+    "pattern": [
+      { "lower": "bleeding" },
+      { "lower": "between" },
+      { "lower": "periods" }
+    ]
+  },
+
+  {
+    "literal": "fever",
+    "category": "symptom",
+    "pattern": [{ "lower": "fever" }]
+  },
+
+  {
+    "literal": "fatigue",
+    "category": "symptom",
+    "pattern": [{ "lower": "fatigue" }]
+  },
+
+  {
+    "literal": "weight loss",
+    "category": "symptom",
+    "pattern": [{ "lower": "weight" }, { "lower": "loss" }]
+  },
+
+  {
+    "literal": "swollen lymph nodes",
+    "category": "symptom",
+    "pattern": [
+      { "lower": "swollen" },
+      { "lower": "lymph" },
+      { "lower": "nodes" }
+    ]
+  },
+
+  {
+    "literal": "jaundice",
+    "category": "symptom",
+    "pattern": [{ "lower": "jaundice" }]
+  },
+
+  {
+    "literal": "sore throat",
+    "category": "symptom",
+    "pattern": [{ "lower": "sore" }, { "lower": "throat" }]
+  },
+
+  {
+    "literal": "rash on palms or soles",
+    "category": "symptom",
+    "pattern": [
+      { "lower": "rash" },
+      { "lower": "on" },
+      { "lower": "palms" },
+      { "lower": "or" },
+      { "lower": "soles" }
+    ]
+  }
+]

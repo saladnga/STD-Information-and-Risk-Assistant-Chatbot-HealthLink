@@ -1,0 +1,68 @@
+{
+  "description": "Exact ordered list of feature columns used during training. Order must match 1:1 during inference.",
+  "version": "1.0",
+  "num_features": 26,
+  "features": [
+    "age",
+    "new_partners_last_3_months",
+    "dysuria",
+    "urinary_frequency",
+    "urinary_urgency",
+    "discharge_thin",
+    "discharge_thick",
+    "discharge_yellow_green",
+    "odor_fishy",
+    "itching",
+    "spotting",
+    "abdominal_pain",
+    "pelvic_pain",
+    "ulcers_painful",
+    "ulcer_painless",
+    "rash_palm_sole",
+    "blisters_genital",
+    "fever",
+    "fatigue",
+    "weight_loss",
+    "swollen_lymph_nodes",
+    "jaundice",
+    "sore_throat",
+    "is_asymptomatic",
+    "condom_use_consistency_never",
+    "condom_use_consistency_sometimes"
+  ],
+  "feature_types": {
+    "symptom_features": [
+      "dysuria",
+      "urinary_frequency",
+      "urinary_urgency",
+      "discharge_thin",
+      "discharge_thick",
+      "discharge_yellow_green",
+      "odor_fishy",
+      "itching",
+      "spotting",
+      "abdominal_pain",
+      "pelvic_pain",
+      "ulcers_painful",
+      "ulcer_painless",
+      "rash_palm_sole",
+      "blisters_genital",
+      "fever",
+      "fatigue",
+      "weight_loss",
+      "swollen_lymph_nodes",
+      "jaundice",
+      "sore_throat",
+      "is_asymptomatic"
+    ],
+    "demographic_features": [
+      "age"
+    ],
+    "behavioral_features": [
+      "new_partners_last_3_months",
+      "condom_use_consistency_never",
+      "condom_use_consistency_sometimes"
+    ]
+  },
+  "timestamp": "2025-11-08T18:38:08.202165"
+}

@@ -1,0 +1,55 @@
+{
+  "burning": "dysuria",
+  "burn": "dysuria",
+  "painful urination": "dysuria",
+  "burns when i pee": "dysuria",
+
+  "discharge": "discharge_thin",
+  "thin discharge": "discharge_thin",
+  "thick discharge": "discharge_thick",
+  "yellow discharge": "discharge_yellow_green",
+  "green discharge": "discharge_yellow_green",
+
+  "abdominal pain": "abdominal_pain",
+  "stomach hurt": "abdominal_pain",
+  "pelvic pain": "pelvic_pain",
+
+  "ulcers": "ulcers_painful",
+  "blisters": "ulcers_painful",
+  "sores": "ulcers_painful",
+  "painful sores": "ulcers_painful",
+  "painless sore": "ulcer_painless",
+  "chancre": "ulcer_painless",
+
+  "fishy": "odor_fishy",
+  "fishy smell": "odor_fishy",
+  "fishy odor": "odor_fishy",
+  "smell": "odor_fishy",
+  "odor": "odor_fishy",
+
+  "pee a lot": "urinary_frequency",
+  "frequent": "urinary_frequency",
+  "frequent urination": "urinary_frequency",
+
+  "urgent": "urinary_urgency",
+  "urgency": "urinary_urgency",
+  "urgent urination": "urinary_urgency",
+
+  "itch": "itching",
+  "itching": "itching",
+
+  "spotting": "spotting",
+  "bleeding": "spotting",
+  "bleeding between periods": "spotting",
+
+  "fever": "fever",
+  "fatigue": "fatigue",
+  "weight loss": "weight_loss",
+  "swollen lymph nodes": "swollen_lymph_nodes",
+  "jaundice": "jaundice",
+  "sore throat": "sore_throat",
+  "rash on palms or soles": "rash_palm_sole",
+  "blisters genital": "blisters_genital",
+  "genital blisters": "blisters_genital",
+  "blisters on genitals": "blisters_genital"
+}

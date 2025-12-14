@@ -1,0 +1,607 @@
+{
+  "description": "Question bank for common disease pair confusions. Each disease pair contains questions grouped by symptom feature key. Used by EIG system to select optimal questions.",
+  "Chlamydia": {
+    "Gonorrhea": {
+      "discharge_thick": [
+        "Do you have thick yellow or green discharge?",
+        "Is your discharge thick and pus-like?",
+        "What is the consistency of your discharge - thin or thick?"
+      ],
+      "discharge_yellow_green": [
+        "Do you have yellow or green colored discharge?",
+        "What color is your discharge?"
+      ],
+      "sore_throat": [
+        "Are you experiencing a sore throat?",
+        "Have you had oral sexual contact recently?",
+        "Do you have any throat discomfort?"
+      ],
+      "discharge_thin": [
+        "Is your discharge thin and clear or white?",
+        "Do you have thin, watery discharge?"
+      ]
+    },
+    "Trichomoniasis": {
+      "odor_fishy": [
+        "Do you notice a strong fishy odor?",
+        "Is there an unusual or fishy smell?",
+        "Have you noticed any changes in odor?"
+      ],
+      "itching": [
+        "Are you experiencing significant itching or irritation?",
+        "Do you have intense itching in the genital area?",
+        "Is there any itching or discomfort?"
+      ],
+      "discharge_thin": [
+        "Is your discharge thin and clear?",
+        "What is the consistency of your discharge?"
+      ],
+      "discharge_yellow_green": [
+        "Do you have yellow or green frothy discharge?",
+        "What color is your discharge?"
+      ]
+    },
+    "BV": {
+      "odor_fishy": [
+        "Do you have a very strong fishy odor, especially after sex?",
+        "Is there a strong, unpleasant fishy smell?",
+        "Have you noticed a fishy odor that gets worse after intercourse?"
+      ],
+      "discharge_thin": [
+        "Is your discharge thin, grayish, and uniform?",
+        "Do you have thin, grayish-white discharge?",
+        "What is the consistency and color of your discharge?"
+      ],
+      "itching": [
+        "Are you experiencing mild to moderate itching?",
+        "Do you have any itching or irritation?"
+      ]
+    },
+    "Mycoplasma genitalium": {
+      "discharge_thin": [
+        "Do you have thin, clear discharge?",
+        "What is the consistency of your discharge?"
+      ],
+      "dysuria": [
+        "Do you experience burning when urinating?",
+        "Is urination painful or uncomfortable?"
+      ],
+      "spotting": [
+        "Have you noticed any spotting between periods?",
+        "Do you experience bleeding between periods?"
+      ]
+    },
+    "UTI": {
+      "dysuria": [
+        "Do you experience severe burning or pain when urinating?",
+        "Is urination very painful?",
+        "Do you have intense pain when you urinate?"
+      ],
+      "urinary_frequency": [
+        "Do you urinate very frequently, even small amounts?",
+        "Are you urinating more often than usual?",
+        "How often do you need to urinate?"
+      ],
+      "urinary_urgency": [
+        "Do you feel an urgent, sudden need to urinate?",
+        "Is there a strong, immediate urge to urinate?",
+        "Do you feel like you can't wait to urinate?"
+      ],
+      "abdominal_pain": [
+        "Do you have lower abdominal pain or pressure?",
+        "Is there pain in your lower stomach area?"
+      ]
+    }
+  },
+  "Gonorrhea": {
+    "Chlamydia": {
+      "discharge_thin": [
+        "Is your discharge thin and clear or white?",
+        "Do you have thin, watery discharge?",
+        "What is the consistency of your discharge?"
+      ],
+      "spotting": [
+        "Have you experienced any bleeding between periods?",
+        "Do you notice spotting between periods?",
+        "Have you had any abnormal bleeding?"
+      ],
+      "discharge_thick": [
+        "Is your discharge thick and pus-like?",
+        "Do you have thick, colored discharge?"
+      ]
+    },
+    "Trichomoniasis": {
+      "odor_fishy": [
+        "Do you notice a strong fishy odor?",
+        "Is there an unusual or fishy smell?",
+        "Have you noticed any changes in odor?"
+      ],
+      "itching": [
+        "Are you experiencing significant itching?",
+        "Do you have intense itching in the genital area?",
+        "Is there any itching or irritation?"
+      ],
+      "discharge_yellow_green": [
+        "Do you have yellow or green frothy discharge?",
+        "What color and consistency is your discharge?"
+      ]
+    },
+    "Mycoplasma genitalium": {
+      "discharge_thin": [
+        "Do you have thin, clear discharge?",
+        "Is your discharge thin and watery?",
+        "What is the consistency of your discharge?"
+      ],
+      "discharge_thick": [
+        "Is your discharge thick and pus-like?",
+        "Do you have thick discharge?"
+      ]
+    }
+  },
+  "Trichomoniasis": {
+    "BV": {
+      "odor_fishy": [
+        "Is the fishy odor very strong and noticeable?",
+        "Do you have an intense fishy smell, especially after sex?",
+        "How strong is the fishy odor?"
+      ],
+      "discharge_thin": [
+        "Is your discharge consistently thin?",
+        "Do you have thin, uniform discharge?",
+        "What is the consistency of your discharge?"
+      ],
+      "itching": [
+        "Are you experiencing significant itching or irritation?",
+        "Do you have intense itching?",
+        "How severe is the itching?"
+      ],
+      "dysuria": [
+        "Do you experience discomfort when urinating?",
+        "Is urination painful or uncomfortable?",
+        "Do you have pain when you urinate?"
+      ]
+    },
+    "Chlamydia": {
+      "abdominal_pain": [
+        "Do you have abdominal or lower stomach pain?",
+        "Are you experiencing any abdominal discomfort?",
+        "Is there pain in your lower abdomen?"
+      ],
+      "pelvic_pain": [
+        "Do you experience pelvic pain?",
+        "Is there pain in your pelvic area?",
+        "Do you have lower pelvic discomfort?"
+      ],
+      "spotting": [
+        "Have you noticed any spotting between periods?",
+        "Do you experience bleeding between periods?",
+        "Have you had any abnormal bleeding?"
+      ],
+      "discharge_thin": [
+        "Is your discharge thin and clear?",
+        "Do you have thin, watery discharge?"
+      ]
+    }
+  },
+  "BV": {
+    "Trichomoniasis": {
+      "odor_fishy": [
+        "Is the fishy odor very strong and noticeable?",
+        "Do you have an intense fishy smell?",
+        "How strong is the fishy odor?"
+      ],
+      "discharge_yellow_green": [
+        "Do you have yellow or green frothy discharge?",
+        "What color is your discharge - is it frothy?"
+      ],
+      "dysuria": [
+        "Do you experience discomfort when urinating?",
+        "Is urination painful?",
+        "Do you have pain when you urinate?"
+      ],
+      "itching": [
+        "Are you experiencing significant itching?",
+        "How severe is the itching?"
+      ]
+    },
+    "Chlamydia": {
+      "pelvic_pain": [
+        "Do you experience pelvic or lower abdominal pain?",
+        "Is there pain in your pelvic area?",
+        "Do you have any pelvic discomfort?"
+      ],
+      "abdominal_pain": [
+        "Do you have abdominal pain?",
+        "Are you experiencing any abdominal discomfort?"
+      ],
+      "spotting": [
+        "Have you noticed any abnormal bleeding?",
+        "Do you experience bleeding between periods?",
+        "Have you had any spotting?"
+      ],
+      "discharge_thick": [
+        "Do you have thick discharge?",
+        "Is your discharge thick and colored?"
+      ]
+    }
+  },
+  "Herpes": {
+    "Syphilis": {
+      "ulcer_painless": [
+        "Are the sores painless?",
+        "Do you have any painless sores or ulcers?",
+        "Are the sores causing any pain?"
+      ],
+      "ulcers_painful": [
+        "Are the sores very painful?",
+        "Do you have painful blisters or sores?",
+        "How painful are the sores?"
+      ],
+      "rash_palm_sole": [
+        "Do you have a rash on your palms or soles?",
+        "Have you noticed any rash on your hands or feet?",
+        "Is there a rash on your palms or the soles of your feet?"
+      ],
+      "fever": [
+        "Do you have a fever?",
+        "Are you experiencing fever along with other symptoms?",
+        "Have you had a fever?"
+      ],
+      "swollen_lymph_nodes": [
+        "Do you have swollen lymph nodes?",
+        "Have you noticed any swollen glands?",
+        "Are your lymph nodes swollen?"
+      ]
+    },
+    "HPV": {
+      "ulcers_painful": [
+        "Do you have painful blisters or sores?",
+        "Are the sores painful when touched?",
+        "Do the sores cause pain?"
+      ],
+      "ulcer_painless": [
+        "Are the sores raised like warts?",
+        "Do you have wart-like growths?",
+        "What do the sores look like?"
+      ],
+      "blisters_genital": [
+        "Do you have fluid-filled blisters?",
+        "Are the sores blisters that may break open?",
+        "What type of sores do you have?"
+      ]
+    }
+  },
+  "Syphilis": {
+    "Herpes": {
+      "ulcers_painful": [
+        "Are the sores very painful?",
+        "Do you have painful blisters?",
+        "How painful are the sores?"
+      ],
+      "ulcer_painless": [
+        "Are the sores completely painless?",
+        "Do you have a single, painless sore?",
+        "Is there any pain associated with the sores?"
+      ],
+      "blisters_genital": [
+        "Do you have fluid-filled blisters?",
+        "Are the sores blisters that cluster together?",
+        "What type of sores do you have?"
+      ],
+      "fever": [
+        "Do you have a fever?",
+        "Are you experiencing fever with the sores?",
+        "Have you had a fever?"
+      ]
+    },
+    "HPV": {
+      "ulcer_painless": [
+        "Are the sores raised like warts?",
+        "Do you have wart-like growths?",
+        "What do the sores look like - are they raised?"
+      ],
+      "ulcers_painful": [
+        "Are the sores painful?",
+        "Do the sores cause any pain?",
+        "How do the sores feel?"
+      ],
+      "rash_palm_sole": [
+        "Do you have a rash on your palms or soles?",
+        "Have you noticed a rash on your hands or feet?",
+        "Is there a rash on your palms or the soles of your feet?"
+      ]
+    }
+  },
+  "HIV": {
+    "Hepatitis B": {
+      "jaundice": [
+        "Have you noticed any yellowing of your skin or eyes?",
+        "Do you have jaundice (yellow skin or eyes)?",
+        "Have you noticed yellowing of your eyes or skin?"
+      ],
+      "fever": [
+        "Do you have a fever?",
+        "Are you experiencing fever?",
+        "Have you had a fever?"
+      ],
+      "fatigue": [
+        "Are you experiencing severe fatigue?",
+        "Do you feel extremely tired?",
+        "How severe is your fatigue?"
+      ],
+      "abdominal_pain": [
+        "Do you have abdominal pain?",
+        "Are you experiencing abdominal discomfort?",
+        "Is there pain in your abdomen?"
+      ],
+      "weight_loss": [
+        "Have you experienced unexplained weight loss?",
+        "Have you lost weight without trying?",
+        "Have you noticed any weight loss?"
+      ],
+      "swollen_lymph_nodes": [
+        "Do you have swollen lymph nodes?",
+        "Have you noticed swollen glands?",
+        "Are your lymph nodes swollen?"
+      ],
+      "sore_throat": [
+        "Do you have a sore throat?",
+        "Are you experiencing throat discomfort?",
+        "Do you have any throat symptoms?"
+      ]
+    },
+    "Hepatitis C": {
+      "jaundice": [
+        "Have you noticed any yellowing of your skin or eyes?",
+        "Do you have jaundice?",
+        "Have you noticed yellowing?"
+      ],
+      "fever": [
+        "Do you have a fever?",
+        "Are you experiencing fever?",
+        "Have you had a fever?"
+      ],
+      "fatigue": [
+        "Are you experiencing fatigue?",
+        "Do you feel tired?",
+        "How severe is your fatigue?"
+      ],
+      "abdominal_pain": [
+        "Do you have abdominal pain?",
+        "Are you experiencing abdominal discomfort?",
+        "Is there pain in your abdomen?"
+      ],
+      "weight_loss": [
+        "Have you experienced unexplained weight loss?",
+        "Have you lost weight without trying?",
+        "Have you noticed any weight loss?"
+      ],
+      "swollen_lymph_nodes": [
+        "Do you have swollen lymph nodes?",
+        "Have you noticed swollen glands?",
+        "Are your lymph nodes swollen?"
+      ],
+      "sore_throat": [
+        "Do you have a sore throat?",
+        "Are you experiencing throat discomfort?",
+        "Do you have any throat symptoms?"
+      ]
+    }
+  },
+  "Hepatitis B": {
+    "Hepatitis C": {
+      "jaundice": [
+        "Have you noticed yellowing of your skin or eyes?",
+        "Do you have jaundice?",
+        "Have you noticed any yellowing?"
+      ],
+      "fever": [
+        "Do you have a fever?",
+        "Are you experiencing fever?",
+        "Have you had a fever?"
+      ],
+      "fatigue": [
+        "Are you experiencing fatigue?",
+        "Do you feel tired?",
+        "How severe is your fatigue?"
+      ],
+      "abdominal_pain": [
+        "Do you have abdominal pain?",
+        "Are you experiencing abdominal discomfort?",
+        "Is there pain in your abdomen?"
+      ]
+    },
+    "HIV": {
+      "weight_loss": [
+        "Have you experienced unexplained weight loss?",
+        "Have you lost weight without trying?",
+        "Have you noticed any weight loss?"
+      ],
+      "swollen_lymph_nodes": [
+        "Do you have swollen lymph nodes?",
+        "Have you noticed swollen glands?",
+        "Are your lymph nodes swollen?"
+      ],
+      "sore_throat": [
+        "Do you have a sore throat?",
+        "Are you experiencing throat discomfort?",
+        "Do you have any throat symptoms?"
+      ]
+    }
+  },
+  "Hepatitis C": {
+    "Hepatitis B": {
+      "jaundice": [
+        "Have you noticed yellowing of your skin or eyes?",
+        "Do you have jaundice?",
+        "Have you noticed any yellowing?"
+      ],
+      "fever": [
+        "Do you have a fever?",
+        "Are you experiencing fever?",
+        "Have you had a fever?"
+      ],
+      "fatigue": [
+        "Are you experiencing fatigue?",
+        "Do you feel tired?",
+        "How severe is your fatigue?"
+      ]
+    },
+    "HIV": {
+      "weight_loss": [
+        "Have you experienced unexplained weight loss?",
+        "Have you lost weight without trying?",
+        "Have you noticed any weight loss?"
+      ],
+      "swollen_lymph_nodes": [
+        "Do you have swollen lymph nodes?",
+        "Have you noticed swollen glands?",
+        "Are your lymph nodes swollen?"
+      ],
+      "sore_throat": [
+        "Do you have a sore throat?",
+        "Are you experiencing throat discomfort?",
+        "Do you have any throat symptoms?"
+      ]
+    }
+  },
+  "UTI": {
+    "Chlamydia": {
+      "discharge_thin": [
+        "Do you have any discharge?",
+        "Is there any unusual discharge?",
+        "Do you notice any discharge?"
+      ],
+      "discharge_thick": [
+        "Do you have thick or colored discharge?",
+        "Is your discharge thick?",
+        "What is the consistency of your discharge?"
+      ],
+      "spotting": [
+        "Have you noticed any bleeding between periods?",
+        "Do you experience spotting?",
+        "Have you had any abnormal bleeding?"
+      ],
+      "pelvic_pain": [
+        "Do you experience pelvic pain?",
+        "Is there pain in your pelvic area?",
+        "Do you have pelvic discomfort?"
+      ]
+    },
+    "Gonorrhea": {
+      "discharge_thick": [
+        "Do you have thick, colored discharge?",
+        "Is your discharge thick and pus-like?",
+        "What is the consistency and color of your discharge?"
+      ],
+      "discharge_yellow_green": [
+        "Do you have yellow or green discharge?",
+        "What color is your discharge?",
+        "Is your discharge colored?"
+      ],
+      "sore_throat": [
+        "Do you have a sore throat?",
+        "Are you experiencing throat discomfort?",
+        "Have you had oral contact?"
+      ]
+    }
+  },
+  "PID": {
+    "Chlamydia": {
+      "fever": [
+        "Do you have a fever?",
+        "Are you experiencing fever?",
+        "Have you had a fever?"
+      ],
+      "pelvic_pain": [
+        "Is the pelvic pain severe?",
+        "How severe is your pelvic pain?",
+        "Do you have intense pelvic pain?"
+      ],
+      "abdominal_pain": [
+        "Do you have severe abdominal pain?",
+        "How severe is your abdominal pain?",
+        "Is the abdominal pain intense?"
+      ]
+    },
+    "Gonorrhea": {
+      "fever": [
+        "Do you have a fever?",
+        "Are you experiencing fever?",
+        "Have you had a fever?"
+      ],
+      "discharge_thick": [
+        "Do you have thick, colored discharge?",
+        "Is your discharge thick and pus-like?",
+        "What is the consistency of your discharge?"
+      ],
+      "pelvic_pain": [
+        "Is the pelvic pain severe?",
+        "How severe is your pelvic pain?",
+        "Do you have intense pelvic pain?"
+      ]
+    }
+  },
+  "Mycoplasma genitalium": {
+    "Chlamydia": {
+      "discharge_thick": [
+        "Do you have thick discharge?",
+        "Is your discharge thick and colored?",
+        "What is the consistency of your discharge?"
+      ],
+      "spotting": [
+        "Have you noticed spotting between periods?",
+        "Do you experience bleeding between periods?",
+        "Have you had any abnormal bleeding?"
+      ],
+      "pelvic_pain": [
+        "Do you experience pelvic pain?",
+        "Is there pain in your pelvic area?",
+        "Do you have pelvic discomfort?"
+      ]
+    },
+    "Gonorrhea": {
+      "discharge_thick": [
+        "Is your discharge very thick and pus-like?",
+        "Do you have thick, colored discharge?",
+        "What is the consistency of your discharge?"
+      ],
+      "sore_throat": [
+        "Do you have a sore throat?",
+        "Are you experiencing throat discomfort?",
+        "Have you had oral contact?"
+      ]
+    }
+  },
+  "Healthy": {
+    "Chlamydia": {
+      "discharge_thin": [
+        "Do you have any unusual discharge?",
+        "Have you noticed any discharge?",
+        "Is there any discharge?"
+      ],
+      "dysuria": [
+        "Do you experience any discomfort when urinating?",
+        "Is urination painful or uncomfortable?",
+        "Do you have any pain when you urinate?"
+      ],
+      "spotting": [
+        "Have you noticed any bleeding between periods?",
+        "Do you experience spotting?",
+        "Have you had any abnormal bleeding?"
+      ]
+    },
+    "Gonorrhea": {
+      "discharge_thick": [
+        "Do you have any thick or colored discharge?",
+        "Have you noticed any unusual discharge?",
+        "Is there any discharge?"
+      ],
+      "dysuria": [
+        "Do you experience any discomfort when urinating?",
+        "Is urination painful?",
+        "Do you have any pain when you urinate?"
+      ]
+    }
+  }
+}
