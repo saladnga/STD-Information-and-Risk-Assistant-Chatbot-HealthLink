@@ -1,0 +1,11 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+.git
+.gitignore
+*.md
+test_rag_integration.py
+app/data/chroma/
+app/data/pdf/

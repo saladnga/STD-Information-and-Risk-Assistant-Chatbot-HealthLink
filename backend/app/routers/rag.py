@@ -70,7 +70,7 @@ async def upload_pdf(
     2. Extracted text from all pages (using text extraction or OCR)
     3. Chunked into overlapping segments
     4. Embedded using OpenAI embeddings
-    5. Stored in ChromaDB vector database
+    5. Stored in Supabase pgvector
     
     Args:
         file: PDF file to upload
@@ -264,37 +264,19 @@ async def get_rag_stats():
     Returns information about ingested documents and chunks.
     """
     try:
-        from rag.retriever import collection
+        from rag.retriever import supabase
         
-        # Get collection count
-        count = collection.count()
+        rows = supabase.table("document_chunks").select("source").execute().data
+        sources = sorted({row["source"] for row in rows})
         
-        # Get unique sources
-        try:
-            # ChromaDB doesn't have a direct way to get unique values
-            # This is a simplified version - in production, you'd want to track this separately
-            all_data = collection.get()
-            sources = set()
-            if all_data.get("metadatas"):
-                for metadata in all_data["metadatas"]:
-                    if metadata and "source" in metadata:
-                        sources.add(metadata["source"])
-            
-            return {
-                "total_chunks": count,
-                "unique_sources": len(sources),
-                "sources": list(sources) if sources else []
-            }
-        except Exception as e:
-            logger.warning(f"Could not get detailed stats: {e}")
-            return {
-                "total_chunks": count,
-                "unique_sources": "unknown",
-                "sources": []
-            }
-            
+        return {
+            "total_chunks": len(rows),
+            "unique_sources": len(sources),
+            "sources": sources
+        }
+    
     except Exception as e:
-        logger.error(f"Error getting RAG stats: {e}")
+        logger.error(f"Error getting RAG stat: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Error getting RAG statistics: {str(e)}"

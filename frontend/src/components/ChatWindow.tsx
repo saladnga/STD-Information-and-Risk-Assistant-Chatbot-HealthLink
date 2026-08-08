@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "../App.css";
 import { UserOutlined } from "@ant-design/icons";
+const API_URL = import.meta.env.VITE_API_URL
 
 interface Message {
   role: "user" | "assistant";
@@ -23,7 +24,7 @@ function ChatWindow() {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const response = await fetch(
-        `http://localhost:8000/ws/chat-history?session_id=${sessionId}&user_id=${user.id}`,
+        `${API_URL}/ws/chat-history?session_id=${sessionId}&user_id=${user.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -65,7 +66,8 @@ function ChatWindow() {
     }
 
     // Connect with authentication
-    const wsUrl = `ws://localhost:8000/ws/chat?token=${token}${
+    const wsBase = API_URL.replace(/^http/, "ws");
+    const wsUrl = `${wsBase}/ws/chat?token=${token}${
       sessionId ? `&session_id=${sessionId}` : ""
     }`;
     const ws = new WebSocket(wsUrl);

@@ -5,24 +5,13 @@ Supports both text-based PDFs and scanned/image-based PDFs using OCR.
 """
 
 import os
+import sys
 import logging
 from typing import List, Dict
 from dotenv import load_dotenv
-import pdf2image
 import pypdf as PyPDF2
-import pytesseract
 
 from openai import OpenAI
-
-# LangChain community modules (mới)
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
-
-
-# Vector database
-import chromadb
-from chromadb.config import Settings
 
 load_dotenv()
 
@@ -64,15 +53,11 @@ except ImportError:
         "Also install Tesseract OCR: https://github.com/tesseract-ocr/tesseract"
     )
 
-# Initialize ChromaDB
-current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-chroma_dir = os.path.join(current_dir, "data", "chroma")
-os.makedirs(chroma_dir, exist_ok=True)
+# Initialize Supabase client (pgvector storage)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from supabase_client import get_supabase_client
 
-client = chromadb.PersistentClient(
-    path=chroma_dir, settings=Settings(anonymized_telemetry=False)
-)
-collection = client.get_or_create_collection(name="medical_documents")
+supabase = get_supabase_client()
 
 
 def extract_text_with_ocr(pdf_path: str, dpi: int = 300) -> str:
@@ -278,23 +263,18 @@ def ingest_pdf(
 
     # Prepare metadata
     filename = os.path.basename(pdf_path)
-    metadatas = [
+    rows = [
         {
             "source": filename,
             "chunk_index": i,
             "total_chunks": len(chunks),
             "extraction_method": extraction_method,
+            "content": chunks[i],
+            "embedding": embeddings[i],
         }
         for i in range(len(chunks))
     ]
-
-    # Generate IDs
-    ids = [f"{filename}_chunk_{i}" for i in range(len(chunks))]
-
-    # Store in ChromaDB
-    collection.add(
-        embeddings=embeddings, documents=chunks, metadatas=metadatas, ids=ids
-    )
+    supabase.table("document_chunks").insert(rows).execute()
 
     logger.info(f"Successfully ingested {len(chunks)} chunks into vector database")
 
