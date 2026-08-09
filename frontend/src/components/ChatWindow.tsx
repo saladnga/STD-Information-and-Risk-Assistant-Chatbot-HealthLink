@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "../App.css";
 import { UserOutlined } from "@ant-design/icons";
-import { API_URL } from "../lib/api";
+import { API_URL, apiFetch } from "../lib/api";
 
 interface Message {
   role: "user" | "assistant";
@@ -9,7 +9,7 @@ interface Message {
   timestamp: Date;
 }
 
-function ChatWindow({sessionId}: {sessionId: string | null}) {
+function ChatWindow({ sessionId }: { sessionId: string | null }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -20,16 +20,11 @@ function ChatWindow({sessionId}: {sessionId: string | null}) {
   const isStreamingRef = useRef(false);
 
   // Load chat history for existing session
-  const loadChatHistory = async (sessionId: string, token: string) => {
+  const loadChatHistory = async (sessionId: string) => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const response = await fetch(
-        `${API_URL}/ws/chat-history?session_id=${sessionId}&user_id=${user.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await apiFetch(
+        `/ws/chat-history?session_id=${sessionId}&user_id=${user.id}`,
       );
 
       if (response.ok) {
@@ -39,7 +34,7 @@ function ChatWindow({sessionId}: {sessionId: string | null}) {
             role: msg.role as "user" | "assistant",
             content: msg.content,
             timestamp: new Date(msg.created_at),
-          })
+          }),
         );
         setMessages(historyMessages);
       }
@@ -61,7 +56,7 @@ function ChatWindow({sessionId}: {sessionId: string | null}) {
 
     // Load existing chat history if resuming a session
     if (sessionId) {
-      loadChatHistory(sessionId, token);
+      loadChatHistory(sessionId);
     }
 
     // Connect with authentication
@@ -147,6 +142,10 @@ function ChatWindow({sessionId}: {sessionId: string | null}) {
       ws.close();
     };
   }, [sessionId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = () => {
     if (!input.trim() || !wsRef.current || !isConnected) return;

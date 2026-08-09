@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { API_URL } from "../lib/api";
+import { apiFetch } from "../lib/api";
 
 interface Session {
   id: string;
@@ -20,13 +20,10 @@ export function SessionSidebar({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const updateSessionTitle = async (sessionId: string, title: string) => {
-    const token = localStorage.getItem("access_token");
-
-    await fetch(`${API_URL}/ws/sessions/${sessionId}/title`, {
+    await apiFetch(`/ws/sessions/${sessionId}/title`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ title }),
     });
@@ -40,18 +37,10 @@ export function SessionSidebar({
   }, []);
 
   const fetchSessions = async () => {
-    const token = localStorage.getItem("access_token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     try {
-      const response = await fetch(
-        `${API_URL}/ws/sessions?user_id=${user.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      const response = await apiFetch(`/ws/sessions?user_id=${user.id}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -76,14 +65,10 @@ export function SessionSidebar({
     if (!confirm("Are you sure you want to delete this conversation?")) return;
 
     setDeletingId(sessionId);
-    const token = localStorage.getItem("access_token");
 
     try {
-      const response = await fetch(`${API_URL}/ws/sessions/${sessionId}`, {
+      const response = await apiFetch(`/ws/sessions/${sessionId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (response.ok) {

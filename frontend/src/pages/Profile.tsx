@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserOutlined } from "@ant-design/icons";
-import { API_URL } from "../lib/api";
+import { apiFetch } from "../lib/api";
 
 interface User {
   first_name: string;
@@ -83,8 +83,6 @@ export default function Profile() {
       return;
     }
 
-    const token = localStorage.getItem("access_token");
-
     const {
       first_name,
       last_name,
@@ -112,11 +110,10 @@ export default function Profile() {
     };
 
     try {
-      const response = await fetch(`${API_URL}/auth/profile`, {
+      const response = await apiFetch(`/auth/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(profileFields),
       });
