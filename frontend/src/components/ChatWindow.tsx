@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "../App.css";
 import { UserOutlined } from "@ant-design/icons";
-const API_URL = import.meta.env.VITE_API_URL
+import { API_URL } from "../lib/api";
 
 interface Message {
   role: "user" | "assistant";

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserOutlined } from "@ant-design/icons";
+import { API_URL } from "../lib/api";
 
 interface User {
   first_name: string;
@@ -70,7 +71,7 @@ export default function Profile() {
   }, [navigate]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -82,16 +83,51 @@ export default function Profile() {
       return;
     }
 
-    try {
-      // In a real app, you'd make an API call here
-      // const response = await fetch('/api/profile', {
-      //   method: 'PUT',
-      //   body: JSON.stringify(formData)
-      // });
+    const token = localStorage.getItem("access_token");
 
-      // For now, save to localStorage
-      localStorage.setItem("user", JSON.stringify(formData));
-      setUser(formData);
+    const {
+      first_name,
+      last_name,
+      email,
+      phone,
+      date_of_birth,
+      gender,
+      year_in_school,
+      major,
+      emergency_contact_name,
+      emergency_contact_phone,
+    } = formData;
+
+    const profileFields = {
+      first_name,
+      last_name,
+      email,
+      phone,
+      date_of_birth,
+      gender,
+      year_in_school,
+      major,
+      emergency_contact_name,
+      emergency_contact_phone,
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/auth/profile`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(profileFields),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      const updatedProfile = await response.json();
+      localStorage.setItem("user", JSON.stringify(updatedProfile));
+      setUser(updatedProfile);
       setIsEditing(false);
       alert("Profile updated successfully!");
     } catch (error) {

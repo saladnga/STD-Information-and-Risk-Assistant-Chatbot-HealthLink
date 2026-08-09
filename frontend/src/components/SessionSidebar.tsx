@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_URL } from "../lib/api";
 
 interface Session {
   id: string;
@@ -18,7 +19,7 @@ export function SessionSidebar({
   const updateSessionTitle = async (sessionId: string, title: string) => {
     const token = localStorage.getItem("access_token");
 
-    await fetch(`http://localhost:8000/ws/sessions/${sessionId}/title`, {
+    await fetch(`${API_URL}/ws/sessions/${sessionId}/title`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -41,7 +42,7 @@ export function SessionSidebar({
 
     try {
       const response = await fetch(
-        `http://localhost:8000/ws/sessions?user_id=${user.id}`,
+        `${API_URL}/ws/sessions?user_id=${user.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -75,7 +76,7 @@ export function SessionSidebar({
 
     try {
       const response = await fetch(
-        `http://localhost:8000/ws/sessions/${sessionId}`,
+        `${API_URL}/ws/sessions/${sessionId}`,
         {
           method: "DELETE",
           headers: {

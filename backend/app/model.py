@@ -160,11 +160,12 @@ def train_model():
     print("Using XGBoost model...")
 
     # 6. Define XGBoost parameters optimized for better accuracy
-    model = xgb.XGBClassifier(
+    model = XGBClassifier(
         objective="multi:softprob",  # Use softprob for probabilities
         num_class=len(label_encoder.classes_),
         use_label_encoder=False,
         eval_metric="mlogloss",
+        early_stopping_round=40,
         random_state=42,
         max_depth=8,  # Increased depth for more complex patterns
         learning_rate=0.025,  # Lower learning rate for better convergence
@@ -200,7 +201,6 @@ def train_model():
         y_train, 
         sample_weight=sample_weight_train,
         eval_set=[(X_train, y_train), (X_test, y_test)],
-        early_stopping_rounds=40,
         verbose=50
     )
 
@@ -256,9 +256,10 @@ def train_model():
     avg_brier_score = np.mean([s["brier_score"] for s in calibration_scores]) if calibration_scores else None
     
     # Get best iteration from early stopping
-    best_iteration = model.get_booster().best_iteration if hasattr(model, 'get_booster') else None
-    if best_iteration is None:
-        best_iteration = model.best_iteration if hasattr(model, 'best_iteration') else None
+    try:
+        best_iteration = model.get_booster().best_iteration
+    except AttributeError:
+        best_iteration = None
 
     # 11. Save model, label encoder, and feature columns
     model_filename = os.path.join(current_dir, "model.joblib")

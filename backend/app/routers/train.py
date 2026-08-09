@@ -27,7 +27,7 @@ security = HTTPBearer(auto_error=False)  # Don't auto-raise error, handle manual
 class TrainingResponse(BaseModel):
     status: str
     message: str
-    files_saved: Optional[Dict[str, str]] = None
+    files_saved: Optional[Dict[str, Dict[str, Any]]] = None
     metrics: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
 
@@ -97,7 +97,7 @@ async def train(
         logger.info(f"Training request initiated by user: {user.get('user_id', 'unknown')}")
         
         # Check if dataset exists
-        csv_path = os.path.join(os.path.dirname(current_dir), "synthetic_data.csv")
+        csv_path = os.path.join(current_dir, "synthetic_data.csv")
         csv_path = os.path.abspath(csv_path)
         
         if not os.path.exists(csv_path):
