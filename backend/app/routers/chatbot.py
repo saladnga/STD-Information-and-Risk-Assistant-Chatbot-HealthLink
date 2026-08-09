@@ -6,7 +6,6 @@ from fastapi import (
     HTTPException,
     Header,
 )
-import uuid
 import re
 import json
 from openai import AsyncOpenAI
@@ -24,6 +23,10 @@ import pandas as pd
 import sys
 import os
 from supabase_client import get_supabase_client
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Add parent directory to path for knowledge_base import
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -42,7 +45,6 @@ load_dotenv()
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Store active chat sessions (WebSocket)
-# chat_sessions = {}
 active_connections = {}
 
 
@@ -94,7 +96,6 @@ async def health_chat(
         await websocket.close()
         return
 
-    # session_id = str(uuid.uuid4())
 
     chat_history = load_chat_history(current_session_id)
 
@@ -112,7 +113,7 @@ async def health_chat(
         if profile_result.data:
             user_profile = profile_result.data
     except Exception as e:
-        print(f"Warning: Could not load user profile: {e}")
+        logger.warning(f"Warning: Could not load user profile: {e}")
 
     # Create personalized system prompt
     base_prompt = """You are Troy HealthBot, a compassionate health assistant specializing in sexual health.
@@ -228,21 +229,21 @@ Important: You gather information through conversation. When ready to analyze, s
             rag_context = ""
             message_content = user_input.strip()
 
-            print(f"\nREGULAR CHAT MESSAGE")
-            print(f"   User input: '{message_content[:100]}...'")
+            logger.debug(f"\nREGULAR CHAT MESSAGE")
+            logger.debug(f"   User input: '{message_content[:100]}...'")
 
             try:
                 # Try RAG retrieval for additional context
-                print(f"Attempting RAG retrieval for chat context...")
+                logger.debug(f"Attempting RAG retrieval for chat context...")
                 rag_answer, rag_sources, rag_confidence, rag_citations = await asyncio.to_thread(
                     retrieve_and_answer,
                     question=message_content, max_results=3, temperature=0.1
                 )
 
                 if rag_answer and rag_confidence and rag_confidence > 0.3:
-                    print(f"   RAG CONTEXT FOUND")
-                    print(f"   Sources: {len(rag_sources) if rag_sources else 0}")
-                    print(f"   Confidence: {rag_confidence}")
+                    logger.debug(f"   RAG CONTEXT FOUND")
+                    logger.debug(f"   Sources: {len(rag_sources) if rag_sources else 0}")
+                    logger.debug(f"   Confidence: {rag_confidence}")
 
                     # Format citations more prominently
                     citation_text = ""
@@ -268,13 +269,13 @@ Important: You gather information through conversation. When ready to analyze, s
                     # Use templates.py formatting for better consistency
                     rag_context = f"\n\nMEDICAL DOCUMENT CONTEXT:\n{rag_answer}{citation_text}\n\nIMPORTANT: This information comes from medical documents and MUST be cited when used!"
                 else:
-                    print(f"NO RAG CONTEXT - Using general medical knowledge")
-                    print(
+                    logger.debug(f"NO RAG CONTEXT - Using general medical knowledge")
+                    logger.debug(
                         f"   Reason: answer={bool(rag_answer)}, confidence={rag_confidence}"
                     )
 
             except Exception as e:
-                print(f"RAG retrieval failed: {e}")
+                logger.warning(f"RAG retrieval failed: {e}")
 
             # Add system context if we have RAG information
             enhanced_messages = messages["messages"].copy()
@@ -343,7 +344,7 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                     await websocket.send_text("\n")
                 else:
                     # Analysis will be triggered, so don't send regular response
-                    print(
+                    logger.debug(
                         "Analysis will be triggered - skipping regular response display"
                     )
 
@@ -425,9 +426,9 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                 rag_query = f"What is {prediction_class_name}? Symptoms, treatment, causes, and medical information about {prediction_class_name}. User symptoms: {symptoms_text}"
 
                 # First ask GPT to query RAG for additional context
-                print(f"\nATTEMPTING RAG RETRIEVAL")
-                print(f"   Query: '{rag_query}'")
-                print(f"   Predicted condition: {prediction_class_name}")
+                logger.debug(f"\nATTEMPTING RAG RETRIEVAL")
+                logger.debug(f"   Query: '{rag_query}'")
+                logger.debug(f"   Predicted condition: {prediction_class_name}")
 
                 # Get comprehensive information from RAG system
                 rag_answer, rag_sources, rag_confidence, rag_citations = await asyncio.to_thread(
@@ -437,23 +438,23 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                     
                 )
 
-                print(f"RAG RESULTS:")
-                print(f"   Answer available: {bool(rag_answer and rag_answer.strip())}")
-                print(f"   Confidence: {rag_confidence}")
-                print(f"   Sources found: {len(rag_sources) if rag_sources else 0}")
+                logger.debug(f"RAG RESULTS:")
+                logger.debug(f"   Answer available: {bool(rag_answer and rag_answer.strip())}")
+                logger.debug(f"   Confidence: {rag_confidence}")
+                logger.debug(f"   Sources found: {len(rag_sources) if rag_sources else 0}")
                 if rag_sources:
                     for i, source in enumerate(rag_sources[:3], 1):
                         filename = source.get(
                             "source", source.get("filename", "Unknown")
                         )
-                        print(f"      Source {i}: {filename}")
+                        logger.debug(f"      Source {i}: {filename}")
 
                 # Fallback to hardcoded knowledge if RAG fails
                 primary_info = STD_KNOWLEDGE.get(prediction_class_name, {})
 
                 # Use RAG answer if available, otherwise fall back to structured info
                 if rag_answer and rag_answer.strip():
-                    print(
+                    logger.debug(
                         f"USING RAG CONTEXT - Retrieved information from medical documents"
                     )
                     medical_info = f"RAG-Retrieved Information:\n{rag_answer}"
@@ -471,10 +472,10 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                             f"\n\nSource Citations: {', '.join(citation_strings)}"
                         )
                 else:
-                    print(
+                    logger.debug(
                         f"FALLBACK TO KNOWLEDGE BASE - No suitable RAG content found"
                     )
-                    print(
+                    logger.debug(
                         f"   Reason: Empty answer={not rag_answer}, Low confidence={rag_confidence}"
                     )
                     context_source = "Built-in Knowledge Base"
@@ -486,9 +487,9 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                         - Urgency: {primary_info.get('urgency', 'moderate')}"""
 
                 # Construct medical summary for GPT to rephrase empathetic
-                print(f"🤖 GENERATING GPT RESPONSE")
-                print(f"   Context Source: {context_source}")
-                print(f"   ML Prediction: {prediction_class_name} ({confidence:.1f}%)")
+                logger.debug(f"🤖 GENERATING GPT RESPONSE")
+                logger.debug(f"   Context Source: {context_source}")
+                logger.debug(f"   ML Prediction: {prediction_class_name} ({confidence:.1f}%)")
 
                 analysis_prompt = f"""Based on the conversation, here are the analysis results:
                 PREDICTION: {primary_info.get('full_name', prediction_class_name)}
@@ -546,7 +547,7 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                         )
                         # page = source.get("page", source.get("page_number", "N/A"))
                         sources_text += f"{i}. {filename} \n"
-                        print(f"📚 Source {i}: {filename}")
+                        logger.debug(f"📚 Source {i}: {filename}")
 
                     await websocket.send_text(sources_text)
                     final_response += sources_text
