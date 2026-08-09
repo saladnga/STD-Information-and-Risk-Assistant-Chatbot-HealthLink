@@ -11,12 +11,21 @@ import Profile from "./pages/Profile";
 
 function ChatLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(
+    localStorage.getItem("current_session_id")
+  );
 
   const handleSelectSession = (sessionId: string) => {
     localStorage.setItem("current_session_id", sessionId);
+    setCurrentSessionId(sessionId);
     setIsSidebarOpen(false); // Close sidebar on mobile after selection
-    window.location.reload();
   };
+
+  const handleNewSession = () => {
+    localStorage.removeItem("current_session_id");
+    setCurrentSessionId(null);
+    setIsSidebarOpen(false);
+  }
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -41,7 +50,7 @@ function ChatLayout() {
         lg:block
       `}
       >
-        <SessionSidebar onSelectSession={handleSelectSession} />
+        <SessionSidebar onSelectSession={handleSelectSession} onNewSession={handleNewSession} />
       </div>
 
       {/* Main Content */}
@@ -72,7 +81,7 @@ function ChatLayout() {
           <div className="w-10" /> {/* Spacer for centering */}
         </div>
 
-        <ChatWindow />
+        <ChatWindow sessionId={currentSessionId}/>
       </div>
     </div>
   );

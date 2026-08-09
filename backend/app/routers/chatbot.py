@@ -9,7 +9,8 @@ from fastapi import (
 import uuid
 import re
 import json
-from openai import OpenAI
+from openai import AsyncOpenAI
+import asyncio
 from dotenv import load_dotenv
 from routers.utils import (
     verify_user_token,
@@ -38,7 +39,7 @@ label_encoder = None
 
 # Setup environment for OpenAI API
 load_dotenv()
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Store active chat sessions (WebSocket)
 # chat_sessions = {}
@@ -233,10 +234,9 @@ Important: You gather information through conversation. When ready to analyze, s
             try:
                 # Try RAG retrieval for additional context
                 print(f"Attempting RAG retrieval for chat context...")
-                rag_answer, rag_sources, rag_confidence, rag_citations = (
-                    retrieve_and_answer(
-                        question=message_content, max_results=3, temperature=0.1
-                    )
+                rag_answer, rag_sources, rag_confidence, rag_citations = await asyncio.to_thread(
+                    retrieve_and_answer,
+                    question=message_content, max_results=3, temperature=0.1
                 )
 
                 if rag_answer and rag_confidence and rag_confidence > 0.3:
@@ -304,7 +304,7 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
             analysis_will_trigger = False  # Initialize
             try:
                 # The OpenAI client expects a list of message dicts
-                res = openai_client.chat.completions.create(
+                res = await openai_client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=enhanced_messages,
                     temperature=0.7,
@@ -312,7 +312,7 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                 )
 
                 ai_response = ""
-                for chunk in res:
+                async for chunk in res:
                     if chunk.choices[0].delta.content is not None:
                         content = chunk.choices[0].delta.content
                         ai_response += content
@@ -402,8 +402,8 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
 
                 feature_dict = process_text_to_feature(symptom_text, feature_columns)
                 feature_df = pd.DataFrame([feature_dict], columns=feature_columns)
-                prediction_probability = model.predict_proba(feature_df)
-                prediction_class = model.predict(feature_df)
+                prediction_probability = await asyncio.to_thread(model.predict_proba, feature_df)
+                prediction_class = await asyncio.to_thread(model.predict, feature_df)
                 prediction_class_name = label_encoder.inverse_transform(
                     prediction_class
                 )[0]
@@ -430,11 +430,11 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                 print(f"   Predicted condition: {prediction_class_name}")
 
                 # Get comprehensive information from RAG system
-                rag_answer, rag_sources, rag_confidence, rag_citations = (
-                    retrieve_and_answer(
-                        question=rag_query,
-                        max_results=5,  # Retrieve more documents for comprehensive information
-                    )
+                rag_answer, rag_sources, rag_confidence, rag_citations = await asyncio.to_thread(
+                    retrieve_and_answer,
+                    question=rag_query,
+                    max_results=5,  # Retrieve more documents for comprehensive information
+                    
                 )
 
                 print(f"RAG RESULTS:")
@@ -515,7 +515,7 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                 )
 
                 # Stream empathetic final analysis message
-                final_res = openai_client.chat.completions.create(
+                final_res = await openai_client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     # model="gpt-5-mini",
                     messages=messages["messages"],
@@ -525,7 +525,7 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
 
                 final_response = ""
                 await websocket.send_text("\n\n")
-                for chunk in final_res:
+                async for chunk in final_res:
                     if chunk.choices[0].delta.content is not None:
                         content = chunk.choices[0].delta.content
                         final_response += content
@@ -653,12 +653,11 @@ async def update_session_title_endpoint(
         supabase.table("chat_sessions")
         .select("user_id")
         .eq("id", session_id)
-        .single()
         .execute()
     )
 
-    if not session_check.data or session_check.data.get("user_id") != user["id"]:
-        raise HTTPException(status_code=404, detail="Session not found or unauthorized")
+    if not session_check.data or session_check.data[0]["user_id"] != user["id"]:
+        raise HTTPException(status_code=404, detail="Session not found")
 
     # Update the correct table name (chat_sessions)
     result = (

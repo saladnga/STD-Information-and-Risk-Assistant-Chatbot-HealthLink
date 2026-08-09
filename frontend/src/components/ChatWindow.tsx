@@ -9,7 +9,7 @@ interface Message {
   timestamp: Date;
 }
 
-function ChatWindow() {
+function ChatWindow({sessionId}: {sessionId: string | null}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -51,7 +51,6 @@ function ChatWindow() {
   // Connect to WebSocket
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    const sessionId = localStorage.getItem("current_session_id"); // Optional
 
     if (!token) {
       console.error("No access token found");
@@ -147,7 +146,7 @@ function ChatWindow() {
     return () => {
       ws.close();
     };
-  }, []);
+  }, [sessionId]);
 
   const sendMessage = () => {
     if (!input.trim() || !wsRef.current || !isConnected) return;

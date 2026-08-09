@@ -9,6 +9,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import logging
+import asyncio
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rag.ingest_pdf import ingest_pdf
@@ -230,7 +231,8 @@ async def ask_question(request: QuestionRequest):
         logger.info(f"Retrieval params: max_results={request.max_results}, similarity_threshold={request.similarity_threshold}, use_reranking={request.use_reranking}")
         
         # Retrieve and generate answer
-        answer, sources, confidence, citations = retrieve_and_answer(
+        answer, sources, confidence, citations = await asyncio.to_thread(
+            retrieve_and_answer,
             question=request.question,
             max_results=request.max_results,
             temperature=request.temperature,

@@ -197,13 +197,10 @@ def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[st
 
 def create_embeddings(texts: List[str]) -> List[List[float]]:
     """Create embeddings for texts using OpenAI."""
-    embeddings = []
-    for text in texts:
-        response = openai_client.embeddings.create(
-            model="text-embedding-ada-002", input=text
-        )
-        embeddings.append(response.data[0].embedding)
-    return embeddings
+    response = openai_client.embeddings.create(
+        model="text-embedding-ada-002", input=texts
+    )
+    return [item.embedding for item in response.data]
 
 
 def ingest_pdf(

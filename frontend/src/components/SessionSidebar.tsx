@@ -9,12 +9,15 @@ interface Session {
 
 export function SessionSidebar({
   onSelectSession,
+  onNewSession,
 }: {
   onSelectSession: (id: string) => void;
+  onNewSession: () => void;
 }) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [editingSession, setEditingSession] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const updateSessionTitle = async (sessionId: string, title: string) => {
     const token = localStorage.getItem("access_token");
@@ -47,7 +50,7 @@ export function SessionSidebar({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -65,32 +68,29 @@ export function SessionSidebar({
   };
 
   const createNewSession = () => {
-    localStorage.removeItem("current_session_id");
-    window.location.reload();
+    onNewSession();
   };
 
   const deleteSession = async (sessionId: string) => {
+    if (deletingId) return;
     if (!confirm("Are you sure you want to delete this conversation?")) return;
 
+    setDeletingId(sessionId);
     const token = localStorage.getItem("access_token");
 
     try {
-      const response = await fetch(
-        `${API_URL}/ws/sessions/${sessionId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_URL}/ws/sessions/${sessionId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
         // If we're currently in the deleted session, go to a new one
         const currentSessionId = localStorage.getItem("current_session_id");
         if (currentSessionId === sessionId) {
-          localStorage.removeItem("current_session_id");
-          window.location.reload();
+          onNewSession();
         }
 
         fetchSessions(); // Refresh the list
@@ -101,6 +101,8 @@ export function SessionSidebar({
     } catch (error) {
       console.error("Error deleting session:", error);
       alert("Error deleting session. Please check your connection.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -136,8 +138,7 @@ export function SessionSidebar({
       <div className="flex-1 overflow-y-auto p-4">
         {sessions.length === 0 ? (
           <div className="text-center py-8">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            </div>
+            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3"></div>
             <p className="text-sm text-gray-500">No conversations yet</p>
             <p className="text-xs text-gray-400 mt-1">
               Start a new chat to begin
@@ -183,7 +184,7 @@ export function SessionSidebar({
                                 day: "numeric",
                                 hour: "2-digit",
                                 minute: "2-digit",
-                              }
+                              },
                             )}
                           </p>
                         </div>
@@ -216,7 +217,8 @@ export function SessionSidebar({
                       </button>
                       <button
                         onClick={() => deleteSession(session.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                        disabled={deletingId === session.id}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-30"
                         title="Delete conversation"
                       >
                         <svg
