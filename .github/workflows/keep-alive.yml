@@ -1,0 +1,13 @@
+name: Keep Services Alive
+
+on:
+  schedule:
+    - cron: "0 12 * * 1,4" # Monday & Thursday at 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend (wakes Render, queries Supabase)
+        run: curl -sf https://troyhealthlink-std-information-and-risk.onrender.com/rag/stats
