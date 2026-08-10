@@ -16,7 +16,6 @@ from rag.ingest_pdf import ingest_pdf
 from rag.retriever import retrieve_and_answer
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/rag", tags=["rag"])

@@ -25,7 +25,6 @@ import os
 from supabase_client import get_supabase_client
 import logging
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Add parent directory to path for knowledge_base import
@@ -39,6 +38,8 @@ model = None
 nlp = None
 label_encoder = None
 
+from typing import Optional, Dict, Tuple
+
 
 # Setup environment for OpenAI API
 load_dotenv()
@@ -49,6 +50,247 @@ active_connections = {}
 
 
 router = APIRouter(prefix="/ws", tags=["WebSocket Chat"])
+
+
+def build_system_prompt(user_profile: Optional[Dict]) -> str:
+    """Build the personalized system prompt for a chat session"""
+    base_prompt = """You are Troy HealthBot, a compassionate health assistant specializing in sexual health.
+You have access to comprehensive medical literature and evidence-based resources."""
+    # Add user-specific context if available
+    if user_profile:
+        user_context = f"\n\nUser Context:"
+        if user_profile.get("first_name"):
+            user_context += f"\n- Name: {user_profile['first_name']}"
+        if user_profile.get("gender"):
+            gender = user_profile["gender"].lower()
+            if gender in ["male", "man", "m"]:
+                user_context += f"\n- Gender: Male (use he/him pronouns)"
+            elif gender in ["female", "woman", "f"]:
+                user_context += f"\n- Gender: Female (use she/her pronouns)"
+            elif gender in ["non-binary", "nonbinary", "nb"]:
+                user_context += f"\n- Gender: Non-binary (use they/them pronouns)"
+            elif gender in ["transgender"]:
+                user_context += (
+                    f"\n- Gender: Transgender (ask for preferred pronouns if needed)"
+                )
+            elif gender in ["other"]:
+                user_context += (
+                    f"\n- Gender: Other (use they/them pronouns or ask for preference)"
+                )
+            elif gender in ["prefer-not-to-say"]:
+                user_context += (
+                    f"\n- Gender: Prefer not to specify (use gender-neutral language)"
+                )
+            else:
+                user_context += (
+                    f"\n- Gender: {user_profile['gender']} (use appropriate pronouns)"
+                )
+        if user_profile.get("year_in_school"):
+            user_context += f"\n- Academic Level: {user_profile['year_in_school']}"
+        if user_profile.get("date_of_birth"):
+            from datetime import datetime
+
+            try:
+                birth_date = datetime.strptime(
+                    user_profile["date_of_birth"], "%Y-%m-%d"
+                )
+                age = datetime.now().year - birth_date.year
+                user_context += f"\n- Age: ~{age} years old"
+            except:
+                pass
+
+        base_prompt += user_context
+
+        full_prompt = (
+            base_prompt
+            + """
+
+Your approach:
+1. Greet users warmly by name (if available) and ask about their concerns
+2. Use appropriate pronouns based on their gender identity
+3. If symptoms are unclear, ask clarifying questions about:
+   - Discharge (color: white/gray/yellow/green)
+   - Pain/burning location and severity
+   - Unusual odors
+   - Duration of symptoms
+4. Once you have enough information, say: "Let me analyze your symptoms..."
+5. Be empathetic, non-judgemental, and medically responsible
+6. Always encourage professional medical c
+7. When providing information from medicalde proper citations using [Source:
+filename, Chunk: X] format
+8. Distinguish between general medical knoent-sourced information
+9. For document-sourced facts: Use citatio fact
+10. For general knowledge: You may mentionl knowledge" to clarify the source
+
+Important: You gather information through to analyze, signal with "ANALYZE:"
+prefix."""
+        )
+
+    return full_prompt
+
+
+async def get_rag_context_for_chat(message_content: str) -> str:
+    """Retrieve RAG context for a regular chat message, formatted for prompt injection."""
+    logger.debug(f"\nREGULAR CHAT MESSAGE")
+    logger.debug(f"   User input: '{message_content[:100]}...'")
+
+    try:
+        logger.debug(f"Attempting RAG retrieval for chat context...")
+        rag_answer, rag_sources, rag_confidence, rag_citations = (
+            await asyncio.to_thread(
+                retrieve_and_answer,
+                question=message_content,
+                max_results=3,
+                temperature=0.1,
+            )
+        )
+
+        if rag_answer and rag_confidence and rag_confidence > 0.3:
+            logger.debug(f"   RAG CONTEXT FOUND")
+            logger.debug(f"   Sources: {len(rag_sources) if rag_sources else 0}")
+            logger.debug(f"   Confidence: {rag_confidence}")
+
+            # Format citations more prominently
+            citation_text = ""
+            if rag_citations:
+                citations_list = []
+                for citation in rag_citations:
+                    if isinstance(citation, dict):
+                        filename = citation.get(
+                            "source", citation.get("filename", "Unknown")
+                        )
+                        chunk = citation.get(
+                            "chunk_index", citation.get("chunk", "N/A")
+                        )
+                        citations_list.append(f"[Source: {filename}, Chunk: {chunk}]")
+                    else:
+                        citations_list.append(str(citation))
+                citation_text = f"\n\nCITATIONS TO USE: {'; '.join(citations_list)}"
+
+            # Use templates.py formatting for better consistency
+            return f"\n\nMEDICAL DOCUMENT CONTEXT:\n{rag_answer}{citation_text}\n\nIMPORTANT: This information comes from medical documents and MUST be cited when used!"
+
+        logger.debug(f"NO RAG CONTEXT - Using general medical knowledge")
+        logger.debug(
+            f"   Reason: answer={bool(rag_answer)}, confidence={rag_confidence}"
+        )
+        return ""
+
+    except Exception as e:
+        logger.warning(f"RAG retrieval failed: {e}")
+        return ""
+
+
+async def run_ml_prediction(
+    symptom_text: str, model, label_encoder, feature_columns
+) -> Tuple[str, float, Dict]:
+    """Run XGBoost prediction on extracted symptom features."""
+    feature_dict = process_text_to_feature(symptom_text, feature_columns)
+    feature_df = pd.DataFrame([feature_dict], columns=feature_columns)
+    prediction_probability = await asyncio.to_thread(model.predict_proba, feature_df)
+    prediction_class = await asyncio.to_thread(model.predict, feature_df)
+    prediction_class_name = label_encoder.inverse_transform(prediction_class)[0]
+    class_probability = dict(
+        zip(label_encoder.classes_, prediction_probability[0].tolist())
+    )
+    confidence = class_probability[prediction_class_name] * 100
+    return prediction_class_name, confidence, class_probability
+
+
+async def get_rag_context_for_diagnosis(
+    prediction_class_name: str, symptoms_text: str
+) -> Tuple[str, list, str]:
+    """Retrieve RAG context for the predicted condition, falling back to the
+    built-in knowledge base when no real document chunks are found."""
+    rag_query = f"What is {prediction_class_name}? Symptoms, treatment, causes, and medical information about {prediction_class_name}. User symptoms: {symptoms_text}"
+
+    logger.debug(f"\nATTEMPTING RAG RETRIEVAL")
+    logger.debug(f"   Query: '{rag_query}'")
+    logger.debug(f"   Predicted condition: {prediction_class_name}")
+
+    rag_answer, rag_sources, rag_confidence, rag_citations = await asyncio.to_thread(
+        retrieve_and_answer,
+        question=rag_query,
+        max_results=5,  # Retrieve more documents for comprehensive information
+    )
+
+    logger.debug(f"RAG RESULTS:")
+    logger.debug(f"   Answer available: {bool(rag_answer and rag_answer.strip())}")
+    logger.debug(f"   Confidence: {rag_confidence}")
+    logger.debug(f"   Sources found: {len(rag_sources) if rag_sources else 0}")
+    if rag_sources:
+        for i, source in enumerate(rag_sources[:3], 1):
+            filename = source.get("source", source.get("filename", "Unknown"))
+            logger.debug(f"      Source {i}: {filename}")
+
+    primary_info = STD_KNOWLEDGE.get(prediction_class_name, {})
+
+    # Check rag_sources, not just rag_answer's truthiness — retrieve_and_answer
+    # always returns non-empty text (a "no answer" template) even when zero
+    # chunks matched, so checking the answer's text alone can never detect a
+    # genuine "nothing found" case. rag_sources is empty precisely when that happens.
+    if rag_sources:
+        logger.debug(
+            f"USING RAG CONTEXT - Retrieved information from medical documents"
+        )
+        medical_info = f"RAG-Retrieved Information:\n{rag_answer}"
+        context_source = "RAG Documents"
+
+        if rag_citations:
+            citation_strings = []
+            for citation in rag_citations:
+                source = citation.get("source", "Unknown")
+                chunk_index = citation.get("chunk_index", 0)
+                citation_strings.append(f"{source} (chunk {chunk_index})")
+
+            medical_info += f"\n\nSource Citations: {', '.join(citation_strings)}"
+    else:
+        logger.debug(f"FALLBACK TO KNOWLEDGE BASE - No suitable RAG content found")
+        logger.debug(
+            f"   Reason: Empty answer={not rag_answer}, Low confidence={rag_confidence}"
+        )
+        context_source = "Built-in Knowledge Base"
+
+        medical_info = f"""- Description: {primary_info.get('description', '')}
+                        - Common symptoms: {', '.join(primary_info.get('symptoms', [])[:4])}
+                        - Treatment: {primary_info.get('treatment', '')}
+                        - Urgency: {primary_info.get('urgency', 'moderate')}"""
+
+    return medical_info, rag_sources, context_source
+
+
+def build_analysis_prompt(
+    prediction_class_name: str,
+    confidence: float,
+    context_source: str,
+    medical_info: str,
+    rag_sources: list,
+    primary_info: Dict,
+) -> str:
+    """Build the analysis prompt summarizing the ML prediction and medical context for GPT."""
+    logger.debug(f"🤖 GENERATING GPT RESPONSE")
+    logger.debug(f"   Context Source: {context_source}")
+    logger.debug(f"   ML Prediction: {prediction_class_name} ({confidence:.1f}%)")
+
+    return f"""Based on the conversation, here are the analysis results:
+                PREDICTION: {primary_info.get('full_name', prediction_class_name)}
+                CONFIDENCE: {confidence:.1f}%
+                CONTEXT SOURCE: {context_source}
+
+                MEDICAL INFO:
+                {medical_info}
+
+                {f"SOURCES: {', '.join([source.get('source', 'Unknown') for source in rag_sources])}" if rag_sources else ""}
+
+                Generate a compassionate response (150-200 words) that:
+                1. Explains what this condition is in simple terms
+                2. Relates it to their specific symptoms mentioned
+                3. Discusses treatment options based on the retrieved information
+                4. Advises next steps (see doctor within X timeframe)
+                5. Offers to answer any questions they have
+                6. If sources are available, specifically mention the source documents by name from the SOURCES section
+                Be warm, reassuring, but medically responsible. Include actual source names if provided.
+                """
 
 
 # WebSocket Endpoint: Interactive Health Chat
@@ -96,7 +338,6 @@ async def health_chat(
         await websocket.close()
         return
 
-
     chat_history = load_chat_history(current_session_id)
 
     # Get user profile for personalized interactions
@@ -115,77 +356,7 @@ async def health_chat(
     except Exception as e:
         logger.warning(f"Warning: Could not load user profile: {e}")
 
-    # Create personalized system prompt
-    base_prompt = """You are Troy HealthBot, a compassionate health assistant specializing in sexual health.
-You have access to comprehensive medical literature and evidence-based resources."""
-
-    # Add user-specific context if available
-    if user_profile:
-        user_context = f"\n\nUser Context:"
-        if user_profile.get("first_name"):
-            user_context += f"\n- Name: {user_profile['first_name']}"
-        if user_profile.get("gender"):
-            gender = user_profile["gender"].lower()
-            if gender in ["male", "man", "m"]:
-                user_context += f"\n- Gender: Male (use he/him pronouns)"
-            elif gender in ["female", "woman", "f"]:
-                user_context += f"\n- Gender: Female (use she/her pronouns)"
-            elif gender in ["non-binary", "nonbinary", "nb"]:
-                user_context += f"\n- Gender: Non-binary (use they/them pronouns)"
-            elif gender in ["transgender"]:
-                user_context += (
-                    f"\n- Gender: Transgender (ask for preferred pronouns if needed)"
-                )
-            elif gender in ["other"]:
-                user_context += (
-                    f"\n- Gender: Other (use they/them pronouns or ask for preference)"
-                )
-            elif gender in ["prefer-not-to-say"]:
-                user_context += (
-                    f"\n- Gender: Prefer not to specify (use gender-neutral language)"
-                )
-            else:
-                user_context += (
-                    f"\n- Gender: {user_profile['gender']} (use appropriate pronouns)"
-                )
-        if user_profile.get("year_in_school"):
-            user_context += f"\n- Academic Level: {user_profile['year_in_school']}"
-        if user_profile.get("date_of_birth"):
-            from datetime import datetime
-
-            try:
-                birth_date = datetime.strptime(
-                    user_profile["date_of_birth"], "%Y-%m-%d"
-                )
-                age = datetime.now().year - birth_date.year
-                user_context += f"\n- Age: ~{age} years old"
-            except:
-                pass
-
-        base_prompt += user_context
-
-    full_prompt = (
-        base_prompt
-        + """
-
-Your approach:
-1. Greet users warmly by name (if available) and ask about their concerns
-2. Use appropriate pronouns based on their gender identity
-3. If symptoms are unclear, ask clarifying questions about:
-   - Discharge (color: white/gray/yellow/green)
-   - Pain/burning location and severity
-   - Unusual odors
-   - Duration of symptoms
-4. Once you have enough information, say: "Let me analyze your symptoms..."
-5. Be empathetic, non-judgemental, and medically responsible
-6. Always encourage professional medical consultation
-7. When providing information from medical literature, always include proper citations using [Source: filename, Chunk: X] format
-8. Distinguish between general medical knowledge and specific document-sourced information
-9. For document-sourced facts: Use citations immediately after each fact
-10. For general knowledge: You may mention "Based on general medical knowledge" to clarify the source
-
-Important: You gather information through conversation. When ready to analyze, signal with "ANALYZE:" prefix."""
-    )
+    full_prompt = build_system_prompt(user_profile)
 
     # Initialize conversation memory
     messages = {
@@ -226,56 +397,8 @@ Important: You gather information through conversation. When ready to analyze, s
             messages["messages"].append({"role": "user", "content": user_input})
 
             # First try to get RAG context for the user's question
-            rag_context = ""
             message_content = user_input.strip()
-
-            logger.debug(f"\nREGULAR CHAT MESSAGE")
-            logger.debug(f"   User input: '{message_content[:100]}...'")
-
-            try:
-                # Try RAG retrieval for additional context
-                logger.debug(f"Attempting RAG retrieval for chat context...")
-                rag_answer, rag_sources, rag_confidence, rag_citations = await asyncio.to_thread(
-                    retrieve_and_answer,
-                    question=message_content, max_results=3, temperature=0.1
-                )
-
-                if rag_answer and rag_confidence and rag_confidence > 0.3:
-                    logger.debug(f"   RAG CONTEXT FOUND")
-                    logger.debug(f"   Sources: {len(rag_sources) if rag_sources else 0}")
-                    logger.debug(f"   Confidence: {rag_confidence}")
-
-                    # Format citations more prominently
-                    citation_text = ""
-                    if rag_citations:
-                        citations_list = []
-                        for citation in rag_citations:
-                            if isinstance(citation, dict):
-                                filename = citation.get(
-                                    "source", citation.get("filename", "Unknown")
-                                )
-                                chunk = citation.get(
-                                    "chunk_index", citation.get("chunk", "N/A")
-                                )
-                                citations_list.append(
-                                    f"[Source: {filename}, Chunk: {chunk}]"
-                                )
-                            else:
-                                citations_list.append(str(citation))
-                        citation_text = (
-                            f"\n\nCITATIONS TO USE: {'; '.join(citations_list)}"
-                        )
-
-                    # Use templates.py formatting for better consistency
-                    rag_context = f"\n\nMEDICAL DOCUMENT CONTEXT:\n{rag_answer}{citation_text}\n\nIMPORTANT: This information comes from medical documents and MUST be cited when used!"
-                else:
-                    logger.debug(f"NO RAG CONTEXT - Using general medical knowledge")
-                    logger.debug(
-                        f"   Reason: answer={bool(rag_answer)}, confidence={rag_confidence}"
-                    )
-
-            except Exception as e:
-                logger.warning(f"RAG retrieval failed: {e}")
+            rag_context = await get_rag_context_for_chat(message_content)
 
             # Add system context if we have RAG information
             enhanced_messages = messages["messages"].copy()
@@ -401,21 +524,12 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                         )
                         continue
 
-                feature_dict = process_text_to_feature(symptom_text, feature_columns)
-                feature_df = pd.DataFrame([feature_dict], columns=feature_columns)
-                prediction_probability = await asyncio.to_thread(model.predict_proba, feature_df)
-                prediction_class = await asyncio.to_thread(model.predict, feature_df)
-                prediction_class_name = label_encoder.inverse_transform(
-                    prediction_class
-                )[0]
-                class_probability = dict(
-                    zip(label_encoder.classes_, prediction_probability[0].tolist())
+                prediction_class_name, confidence, class_probability = (
+                    await run_ml_prediction(
+                        symptom_text, model, label_encoder, feature_columns
+                    )
                 )
 
-                # Retrieve medical information using RAG
-                confidence = class_probability[prediction_class_name] * 100
-
-                # Create a detailed query for RAG retrieval
                 symptoms_text = " ".join(
                     [
                         msg["content"]
@@ -423,93 +537,21 @@ Remember: Patient safety depends on accurate sourcing. When in doubt about docum
                         if msg["role"] == "user"
                     ]
                 )
-                rag_query = f"What is {prediction_class_name}? Symptoms, treatment, causes, and medical information about {prediction_class_name}. User symptoms: {symptoms_text}"
-
-                # First ask GPT to query RAG for additional context
-                logger.debug(f"\nATTEMPTING RAG RETRIEVAL")
-                logger.debug(f"   Query: '{rag_query}'")
-                logger.debug(f"   Predicted condition: {prediction_class_name}")
-
-                # Get comprehensive information from RAG system
-                rag_answer, rag_sources, rag_confidence, rag_citations = await asyncio.to_thread(
-                    retrieve_and_answer,
-                    question=rag_query,
-                    max_results=5,  # Retrieve more documents for comprehensive information
-                    
+                primary_info = STD_KNOWLEDGE.get(prediction_class_name, {})
+                medical_info, rag_sources, context_source = (
+                    await get_rag_context_for_diagnosis(
+                        prediction_class_name, symptoms_text
+                    )
                 )
 
-                logger.debug(f"RAG RESULTS:")
-                logger.debug(f"   Answer available: {bool(rag_answer and rag_answer.strip())}")
-                logger.debug(f"   Confidence: {rag_confidence}")
-                logger.debug(f"   Sources found: {len(rag_sources) if rag_sources else 0}")
-                if rag_sources:
-                    for i, source in enumerate(rag_sources[:3], 1):
-                        filename = source.get(
-                            "source", source.get("filename", "Unknown")
-                        )
-                        logger.debug(f"      Source {i}: {filename}")
-
-                # Fallback to hardcoded knowledge if RAG fails
-                primary_info = STD_KNOWLEDGE.get(prediction_class_name, {})
-
-                # Use RAG answer if available, otherwise fall back to structured info
-                if rag_answer and rag_answer.strip():
-                    logger.debug(
-                        f"USING RAG CONTEXT - Retrieved information from medical documents"
-                    )
-                    medical_info = f"RAG-Retrieved Information:\n{rag_answer}"
-                    context_source = "RAG Documents"
-
-                    if rag_citations:
-                        # Format citations as readable strings
-                        citation_strings = []
-                        for citation in rag_citations:
-                            source = citation.get("source", "Unknown")
-                            chunk_index = citation.get("chunk_index", 0)
-                            citation_strings.append(f"{source} (chunk {chunk_index})")
-
-                        medical_info += (
-                            f"\n\nSource Citations: {', '.join(citation_strings)}"
-                        )
-                else:
-                    logger.debug(
-                        f"FALLBACK TO KNOWLEDGE BASE - No suitable RAG content found"
-                    )
-                    logger.debug(
-                        f"   Reason: Empty answer={not rag_answer}, Low confidence={rag_confidence}"
-                    )
-                    context_source = "Built-in Knowledge Base"
-
-                    # Fallback to structured knowledge
-                    medical_info = f"""- Description: {primary_info.get('description', '')}
-                        - Common symptoms: {', '.join(primary_info.get('symptoms', [])[:4])}
-                        - Treatment: {primary_info.get('treatment', '')}
-                        - Urgency: {primary_info.get('urgency', 'moderate')}"""
-
-                # Construct medical summary for GPT to rephrase empathetic
-                logger.debug(f"🤖 GENERATING GPT RESPONSE")
-                logger.debug(f"   Context Source: {context_source}")
-                logger.debug(f"   ML Prediction: {prediction_class_name} ({confidence:.1f}%)")
-
-                analysis_prompt = f"""Based on the conversation, here are the analysis results:
-                PREDICTION: {primary_info.get('full_name', prediction_class_name)}
-                CONFIDENCE: {confidence:.1f}%
-                CONTEXT SOURCE: {context_source}
-                
-                MEDICAL INFO:
-                {medical_info}
-                
-                {f"SOURCES: {', '.join([source.get('source', 'Unknown') for source in rag_sources])}" if rag_sources else ""}
-                
-                Generate a compassionate response (150-200 words) that:
-                1. Explains what this condition is in simple terms
-                2. Relates it to their specific symptoms mentioned
-                3. Discusses treatment options based on the retrieved information
-                4. Advises next steps (see doctor within X timeframe)
-                5. Offers to answer any questions they have
-                6. If sources are available, specifically mention the source documents by name from the SOURCES section
-                Be warm, reassuring, but medically responsible. Include actual source names if provided.
-                """
+                analysis_prompt = build_analysis_prompt(
+                    prediction_class_name,
+                    confidence,
+                    context_source,
+                    medical_info,
+                    rag_sources,
+                    primary_info,
+                )
 
                 messages["messages"].append(
                     {"role": "system", "content": analysis_prompt}
@@ -651,10 +693,7 @@ async def update_session_title_endpoint(
     supabase = get_supabase_client()
     # verify session exists and belongs to user
     session_check = (
-        supabase.table("chat_sessions")
-        .select("user_id")
-        .eq("id", session_id)
-        .execute()
+        supabase.table("chat_sessions").select("user_id").eq("id", session_id).execute()
     )
 
     if not session_check.data or session_check.data[0]["user_id"] != user["id"]:
@@ -691,11 +730,10 @@ async def delete_session(session_id: str, authorization: str = Header(...)):
             supabase.table("chat_sessions")
             .select("user_id")
             .eq("id", session_id)
-            .single()
             .execute()
         )
 
-        if not session_check.data or session_check.data["user_id"] != user["id"]:
+        if not session_check.data or session_check.data[0]["user_id"] != user["id"]:
             raise HTTPException(status_code=404, detail="Session not found")
 
         # Delete all messages first (due to foreign key constraint)

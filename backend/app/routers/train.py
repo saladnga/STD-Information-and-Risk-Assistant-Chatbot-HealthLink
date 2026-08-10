@@ -19,7 +19,6 @@ from auth_utils import ALLOW_UNAUTHENTICATED_TRAIN
 from routers.utils import verify_user_token
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/train", tags=["training"])
