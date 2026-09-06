@@ -267,12 +267,18 @@ async def health_chat(
                     # of this defense). This block is always accurate even
                     # if the model's own inline citation wasn't.
                     if rag_sources_for_chat:
-                        sources_text = "\n\n**Sources:**\n"
-                        for i, source in enumerate(rag_sources_for_chat[:3], 1):
+                        # Multiple retrieved chunks often share one source
+                        # PDF - list each filename once, not once per chunk.
+                        filenames = []
+                        for source in rag_sources_for_chat:
                             filename = source.get(
                                 "source", source.get("filename", "Medical Literature")
                             )
-                            sources_text += f"{i}. {filename}\n"
+                            if filename not in filenames:
+                                filenames.append(filename)
+                        sources_text = "\n\n**Sources:**\n" + "\n".join(
+                            f"{i}. {name}" for i, name in enumerate(filenames[:3], 1)
+                        )
                         await websocket.send_text(sources_text)
                         ai_response += sources_text
 
@@ -388,19 +394,19 @@ async def health_chat(
                 await websocket.send_text("\n\n")
                 await websocket.send_text(final_response)
 
-                # Add source information if available from RAG
+                # Add source information if available from RAG - one entry
+                # per filename, not per chunk (several chunks often share a source).
                 if rag_sources and len(rag_sources) > 0:
-                    sources_text = "\n\n**Sources:**\n"
-                    for i, source in enumerate(
-                        rag_sources[:3], 1
-                    ):  # Show up to 3 sources
-                        # Try multiple keys for the source filename
+                    filenames = []
+                    for source in rag_sources:
                         filename = source.get(
                             "source", source.get("filename", "Medical Literature")
                         )
-                        sources_text += f"{i}. {filename} \n"
-                        logger.debug(f"Source {i}: {filename}")
-
+                        if filename not in filenames:
+                            filenames.append(filename)
+                    sources_text = "\n\n**Sources:**\n" + "\n".join(
+                        f"{i}. {name}" for i, name in enumerate(filenames[:3], 1)
+                    )
                     await websocket.send_text(sources_text)
                     final_response += sources_text
 
