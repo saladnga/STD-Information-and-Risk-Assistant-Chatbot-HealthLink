@@ -5,7 +5,7 @@ Provides endpoints for uploading PDFs and asking questions with RAG.
 import os
 import sys
 import hashlib
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Depends
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import logging
@@ -14,11 +14,15 @@ import asyncio
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rag.ingest_pdf import ingest_pdf
 from rag.retriever import retrieve_and_answer
+from auth_utils import ALLOW_UNAUTHENTICATED_RAG_UPLOAD, ADMIN_EMAILS, require_admin_auth
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/rag", tags=["rag"])
+verify_upload_auth = require_admin_auth(
+    ALLOW_UNAUTHENTICATED_RAG_UPLOAD, allowed_emails=ADMIN_EMAILS
+)
 
 
 class QuestionRequest(BaseModel):
@@ -60,7 +64,8 @@ async def upload_pdf(
     file: UploadFile = File(...),
     use_ocr: Optional[bool] = Form(False),
     ocr_fallback: Optional[bool] = Form(True),
-    ocr_dpi: Optional[int] = Form(300)
+    ocr_dpi: Optional[int] = Form(300),
+    user: Dict = Depends(verify_upload_auth),
 ):
     """
     Upload and ingest a medical PDF document for RAG.

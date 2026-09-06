@@ -8,21 +8,19 @@ import sys
 import json
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import logging
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from model import train_model, load_model
-from auth_utils import ALLOW_UNAUTHENTICATED_TRAIN
-from db import verify_user_token
+from auth_utils import ALLOW_UNAUTHENTICATED_TRAIN, require_admin_auth
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/train", tags=["training"])
-security = HTTPBearer(auto_error=False)  # Don't auto-raise error, handle manually
+verify_auth_optional = require_admin_auth(ALLOW_UNAUTHENTICATED_TRAIN)
 
 
 class TrainingResponse(BaseModel):
@@ -38,35 +36,6 @@ class TrainingRequest(BaseModel):
 
     force_retrain: Optional[bool] = True  # Force retraining even if model exists
 
-
-async def verify_auth_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-):
-    """
-    Verify authentication token if provided.
-    For development, allows bypassing auth if ALLOW_UNAUTHENTICATED_TRAIN is True.
-    """
-    # Allow unauthenticated access in development mode
-    if ALLOW_UNAUTHENTICATED_TRAIN:
-        logger.warning(
-            "Training endpoint is accessible without authentication (development mode)"
-        )
-        return {"user_id": "dev_user", "role": "admin"}
-
-    # Require authentication in production
-    if not credentials:
-        raise HTTPException(
-            status_code=401,
-            detail="Authentication required. Please provide a valid Bearer token.",
-        )
-
-    user = verify_user_token(credentials.credentials)
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token"
-        )
-    return user
 
 @router.post("", response_model=TrainingResponse)
 async def train(
