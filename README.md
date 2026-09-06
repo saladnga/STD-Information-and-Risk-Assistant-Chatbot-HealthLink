@@ -1,10 +1,8 @@
 # Troy HealthLink - AI Sexual Health Assistant
 
-A full-stack AI health assistant for Troy University students: a real-time chat that combines a symptom-classification model with retrieval-augmented generation (RAG) over real medical literature, so answers are either grounded in an actual cited source or honestly labeled as general knowledge — never presented as sourced when they aren't.
+A full-stack AI health assistant for Troy University students: a real-time chat that combines a symptom-classification model with retrieval-augmented generation (RAG) over real medical literature, so answers are either grounded in an actual cited source or honestly labeled as general knowledge.
 
 **Tech Stack:** React 19 + TypeScript (Vite) | FastAPI + Python 3.12 | Supabase (PostgreSQL + Auth + pgvector)  OpenAI (`gpt-4o-mini` by default, or your own key on a higher-tier model + `text-embedding-ada-002`) | XGBoost | Docker | Render + Vercel | GitHub Actions CI
-
-[Architecture diagram](docs/architecture.html) (open locally in a browser - it's interactive HTML, which GitHub only shows as raw source).
 
 ## Screenshots
 
