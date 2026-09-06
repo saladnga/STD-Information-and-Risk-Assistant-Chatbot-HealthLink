@@ -183,7 +183,9 @@ async def health_chat(
 
             # First try to get RAG context for the user's question
             message_content = user_input.strip()
-            rag_context = await get_rag_context_for_chat(message_content)
+            rag_context, rag_sources_for_chat = await get_rag_context_for_chat(
+                message_content
+            )
 
             # Add system context if we have RAG information
             enhanced_messages = messages["messages"].copy()
@@ -200,6 +202,7 @@ async def health_chat(
                 5. ACCURACY: Only use information explicitly stated in the provided context - do not make inferences
                 6. TRANSPARENCY: If document information is incomplete, state that limitation clearly
                 7. SAFETY: Always encourage professional medical consultation for diagnosis and treatment
+                8. NEVER invent or name a source (e.g. CDC, WHO, Mayo Clinic) that isn't in the CITATIONS TO USE list above
                 Remember: Patient safety depends on accurate sourcing. When in doubt about document content, say so explicitly.
                 """
 
@@ -255,6 +258,24 @@ async def health_chat(
                             )
                             await websocket.send_text(fallback)
                             ai_response = fallback
+
+                    # A real, backend-built citation list from what was
+                    # actually retrieved - this reply streamed live, so an
+                    # inline [Source: ...] the model wrote itself can't be
+                    # verified/stripped before it's already sent (see
+                    # build_system_prompt's rule #7 for the prompt-side half
+                    # of this defense). This block is always accurate even
+                    # if the model's own inline citation wasn't.
+                    if rag_sources_for_chat:
+                        sources_text = "\n\n**Sources:**\n"
+                        for i, source in enumerate(rag_sources_for_chat[:3], 1):
+                            filename = source.get(
+                                "source", source.get("filename", "Medical Literature")
+                            )
+                            sources_text += f"{i}. {filename}\n"
+                        await websocket.send_text(sources_text)
+                        ai_response += sources_text
+
                     # Send completion signal to close stream
                     await websocket.send_text("__DONE__")
                 else:

@@ -84,10 +84,8 @@ def build_system_prompt(user_profile: Optional[Dict]) -> str:
             4. Once you have enough information, say: "Let me analyze your symptoms..."
             5. Be empathetic, non-judgemental, and medically responsible
             6. Always encourage professional medical consultation
-            7. When providing information from medical proper citations using [Source: filename, Chunk: X] format
-            8. Distinguish between general medical known-sourced information
-            9. For document-sourced facts: Use citation fact
-            10. For general knowledge: You may mention your general knowledge to clarify the source
+            7. Only cite a document using [Source: filename, Chunk: X] when this message's context actually gave you that exact citation - never write this format, or name any specific organization or publication (CDC, WHO, Mayo Clinic, etc.), when you weren't given one
+            8. If answering from general medical knowledge instead, say so explicitly and do not attribute it to any source
             Important: You gather information through to analyze, signal with "ANALYZE:" prefix.
             """
         )
@@ -95,8 +93,14 @@ def build_system_prompt(user_profile: Optional[Dict]) -> str:
     return full_prompt
 
 
-async def get_rag_context_for_chat(message_content: str) -> str:
-    """Retrieve RAG context for a regular chat message, formatted for prompt injection."""
+async def get_rag_context_for_chat(message_content: str) -> Tuple[str, list]:
+    """
+    Retrieve RAG context for a regular chat message, formatted for prompt
+    injection. Returns (context_text, rag_sources) - the raw sources list is
+    for the caller to build a deterministic citation display from (real
+    filenames, not the model's own self-reported citation), since the model
+    can't be fully trusted not to invent one in its free-text reply.
+    """
     logger.debug(f"\nREGULAR CHAT MESSAGE")
     logger.debug(f"User input: '{message_content[:100]}...'")
 
@@ -133,18 +137,19 @@ async def get_rag_context_for_chat(message_content: str) -> str:
                         citations_list.append(str(citation))
                 citation_text = f"\n\nCITATIONS TO USE: {'; '.join(citations_list)}"
 
-            return f"\n\nMEDICAL DOCUMENT CONTEXT:\n{rag_answer}{citation_text}\n\nIMPORTANT: This information comes from medical documents and MUST be cited when used!"
+            context = f"\n\nMEDICAL DOCUMENT CONTEXT:\n{rag_answer}{citation_text}\n\nIMPORTANT: This information comes from medical documents and MUST be cited when used!"
+            return context, (rag_sources or [])
 
         logger.debug(f"NO RAG CONTEXT - Using general medical knowledge")
         logger.debug(
             f"Reason: answer={bool(rag_answer)}, confidence={rag_confidence}"
         )
 
-        return ""
+        return "", []
 
     except Exception as e:
         logger.warning(f"RAG retrieval failed: {e}")
-        return ""
+        return "", []
 
 
 async def run_ml_prediction(
