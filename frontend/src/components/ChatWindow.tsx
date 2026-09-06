@@ -1,227 +1,96 @@
 import { useState, useEffect, useRef } from "react";
-import "../App.css";
-import { UserOutlined } from "@ant-design/icons";
-import { API_URL, apiFetch } from "../lib/api";
+import { MedicineBoxOutlined, SendOutlined } from "@ant-design/icons";
+import PulseTrace from "./PulseTrace";
+import { useChatSocket } from "../hooks/useChatSocket";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
+const SUGGESTIONS = [
+  "I have a symptom I'm not sure about",
+  "What happens to what I tell you?",
+  "Can you explain how STI testing works?",
+];
+
+interface ChatWindowProps {
+  sessionId: string | null;
+  onSessionCreated: (sessionId: string) => void;
+  onResponseComplete: () => void;
 }
 
-function ChatWindow({ sessionId }: { sessionId: string | null }) {
-  const [messages, setMessages] = useState<Message[]>([]);
+function ChatWindow({
+  sessionId,
+  onSessionCreated,
+  onResponseComplete,
+}: ChatWindowProps) {
+  const { messages, isConnected, isTyping, isLoadingHistory, sendText } =
+    useChatSocket({ sessionId, onSessionCreated, onResponseComplete });
   const [input, setInput] = useState("");
-  const [isConnected, setIsConnected] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentMessageRef = useRef("");
-  const isStreamingRef = useRef(false);
-
-  // Load chat history for existing session
-  const loadChatHistory = async (sessionId: string) => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const response = await apiFetch(
-        `/ws/chat-history?session_id=${sessionId}&user_id=${user.id}`,
-      );
-
-      if (response.ok) {
-        const history = await response.json();
-        const historyMessages = history.map(
-          (msg: { role: string; content: string; created_at: string }) => ({
-            role: msg.role as "user" | "assistant",
-            content: msg.content,
-            timestamp: new Date(msg.created_at),
-          }),
-        );
-        setMessages(historyMessages);
-      }
-    } catch (error) {
-      console.error("Failed to load chat history:", error);
-    }
-  };
-
-  // Connect to WebSocket
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-
-    if (!token) {
-      console.error("No access token found");
-      // Redirect to login
-      window.location.href = "/login";
-      return;
-    }
-
-    // Load existing chat history if resuming a session
-    if (sessionId) {
-      loadChatHistory(sessionId);
-    }
-
-    // Connect with authentication
-    const wsBase = API_URL.replace(/^http/, "ws");
-    const wsUrl = `${wsBase}/ws/chat?token=${token}${
-      sessionId ? `&session_id=${sessionId}` : ""
-    }`;
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      console.log("Connected to Troy HealthBot");
-      setIsConnected(true);
-
-      // Only show welcome message for new sessions (no sessionId in localStorage)
-      if (!sessionId) {
-        setMessages([
-          {
-            role: "assistant",
-            content:
-              "Hi! I'm Troy HealthBot. I'm here to help you understand any health concerns you might have. What brings you here today?",
-            timestamp: new Date(),
-          },
-        ]);
-      }
-    };
-
-    ws.onmessage = (event) => {
-      const chunk = event.data;
-
-      // If it's the end of the message
-      if (chunk === "\n") {
-        setIsTyping(false);
-        isStreamingRef.current = false;
-        // Keep currentMessageRef - it will be reset when next message starts
-        return;
-      }
-
-      // If it's the start of a new assistant message
-      if (!isStreamingRef.current) {
-        isStreamingRef.current = true;
-        currentMessageRef.current = chunk; // Reset and start fresh
-        setIsTyping(true);
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: chunk,
-            timestamp: new Date(),
-          },
-        ]);
-        return;
-      }
-
-      // Otherwise, update the last assistant message in place
-      currentMessageRef.current += chunk;
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        const lastIndex = newMessages.length - 1;
-        if (lastIndex >= 0 && newMessages[lastIndex].role === "assistant") {
-          newMessages[lastIndex] = {
-            ...newMessages[lastIndex],
-            content: currentMessageRef.current,
-            timestamp: new Date(),
-          };
-        }
-        return newMessages;
-      });
-    };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      setIsConnected(false);
-    };
-
-    ws.onclose = () => {
-      console.log("Disconnected from Troy HealthBot");
-      setIsConnected(false);
-    };
-
-    wsRef.current = ws;
-
-    return () => {
-      ws.close();
-    };
-  }, [sessionId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = () => {
-    if (!input.trim() || !wsRef.current || !isConnected) return;
-
-    // Add user message
-    const userMessage: Message = {
-      role: "user",
-      content: input,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-
-    // Send to WebSocket
-    wsRef.current.send(input);
-
-    // Clear input
+  const submit = (text: string) => {
+    sendText(text);
     setInput("");
-    currentMessageRef.current = "";
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      submit(input);
     }
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex flex-col">
-      {/* Chat Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-troy-red to-troy-dark rounded-full flex items-center justify-center">
-              <span className="text-white text-lg">
-                <UserOutlined />
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Troy HealthBot
-              </h2>
-              <p className="text-sm text-gray-600">AI Health Assistant</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  isConnected ? "bg-green-500" : "bg-red-500"
-                }`}
-              />
-              <span className="text-sm text-gray-600 hidden sm:inline">
-                {isConnected ? "Connected" : "Connecting..."}
-              </span>
-            </div>
-          </div>
+    <div className="flex-1 min-h-0 flex flex-col bg-troy-clinic">
+      {/* Loading state: only surfaces while the socket isn't up yet */}
+      {!isConnected && (
+        <div className="bg-troy-amber/10 border-b border-troy-amber/30 text-troy-amber text-xs font-mono text-center py-1.5">
+          Connecting to Troy HealthBot…
         </div>
-      </header>
+      )}
 
-      {/* Chat Messages */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-          {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gradient-to-br from-troy-red to-troy-dark rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white text-2xl">👋</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Welcome to Troy HealthBot
-              </h3>
-              <p className="text-gray-600 max-w-md mx-auto">
-                I'm here to help you with health questions and symptom analysis.
-                How can I assist you today?
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
+          {isLoadingHistory ? (
+            <div className="space-y-6">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}
+                >
+                  <div
+                    className={`animate-pulse rounded-2xl px-4 py-3 max-w-[75%] ${
+                      i % 2 === 0 ? "bg-troy-surface" : "bg-troy-line"
+                    }`}
+                  >
+                    <div className="h-3 bg-troy-line rounded w-40" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center py-10">
+              <h2 className="font-mono font-bold text-3xl text-troy-ink mb-2">
+                What's on your mind?
+              </h2>
+              <p className="text-troy-ink/60 text-md max-w-sm mx-auto mb-8 font-mono">
+                Ask about a symptom, a medication, or how testing works — it
+                stays between us.
               </p>
+              <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
+                {SUGGESTIONS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => submit(s)}
+                    disabled={!isConnected}
+                    className="text-base px-4 py-2 border border-troy-line text-troy-ink/80 hover:border-troy-red hover:text-troy-red transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-mono"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="space-y-6">
@@ -232,32 +101,27 @@ function ChatWindow({ sessionId }: { sessionId: string | null }) {
                     msg.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
-                  <div
-                    className={`flex items-start gap-3 max-w-[85%] sm:max-w-[75%]`}
-                  >
+                  <div className="flex items-start gap-3 max-w-[85%] sm:max-w-[75%]">
                     {msg.role === "assistant" && (
-                      <div className="w-8 h-8 bg-gradient-to-br from-troy-red to-troy-dark rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                        <span className="text-white text-sm">
-                          {" "}
-                          <UserOutlined />
-                        </span>
+                      <div className="w-8 h-8 bg-troy-red rounded-full flex items-center justify-center flex-shrink-0 mt-1 text-white text-sm">
+                        <MedicineBoxOutlined />
                       </div>
                     )}
                     <div
-                      className={`rounded-2xl px-4 py-3 ${
+                      className={`rounded-2xl px-4 py-3 text-base ${
                         msg.role === "user"
-                          ? "bg-troy-red text-white ml-auto"
-                          : "bg-white text-gray-800 shadow-sm border border-gray-100"
+                          ? "bg-troy-red text-white"
+                          : "bg-troy-surface text-troy-ink border border-troy-line"
                       }`}
                     >
                       <div className="whitespace-pre-wrap break-words leading-relaxed">
                         {msg.content}
                       </div>
                       <p
-                        className={`text-xs mt-2 ${
+                        className={`font-mono text-xs mt-2 ${
                           msg.role === "user"
-                            ? "text-troy-gray/80"
-                            : "text-gray-400"
+                            ? "text-white/70"
+                            : "text-troy-ink/40"
                         }`}
                       >
                         {msg.timestamp.toLocaleTimeString([], {
@@ -266,14 +130,6 @@ function ChatWindow({ sessionId }: { sessionId: string | null }) {
                         })}
                       </p>
                     </div>
-                    {msg.role === "user" && (
-                      <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                        <span className="text-gray-600 text-sm">
-                          {" "}
-                          <UserOutlined />
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
@@ -283,25 +139,14 @@ function ChatWindow({ sessionId }: { sessionId: string | null }) {
           {isTyping && (
             <div className="flex justify-start mt-6">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-troy-red to-troy-dark rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-sm">
-                    {" "}
-                    <UserOutlined />
-                  </span>
+                <div className="w-8 h-8 bg-troy-red rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm">
+                  <MedicineBoxOutlined />
                 </div>
-                <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-100">
-                  <div className="flex gap-1 items-center">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.1s" }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    />
-                    <span className="text-gray-500 text-sm ml-2">
-                      Typing...
+                <div className="bg-troy-surface border border-troy-line rounded-2xl px-4 py-3">
+                  <div className="flex gap-2 items-center">
+                    <PulseTrace animated className="w-16 h-5" />
+                    <span className="text-troy-ink/60 text-sm">
+                      Thinking...
                     </span>
                   </div>
                 </div>
@@ -313,53 +158,31 @@ function ChatWindow({ sessionId }: { sessionId: string | null }) {
         </div>
       </div>
 
-      {/* Input Area */}
-      <div className="bg-white border-t border-gray-200 shadow-lg">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex gap-3 items-start">
-            <div className="flex-1">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Describe your symptoms or ask a health question..."
-                className="w-full resize-none rounded-2xl border border-gray-300 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-troy-red focus:border-transparent transition-all duration-200 min-h-[48px] max-h-32"
-                rows={1}
-                disabled={!isConnected}
-              />
-            </div>
+      {/* Input */}
+      <div className="border-t border-troy-line bg-troy-surface">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+          <div className="flex items-end gap-2 bg-troy-clinic border border-troy-line px-2 py-1.5 focus-within:border-troy-red transition-colors">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Describe your symptoms or ask a health question..."
+              className="flex-1 bg-transparent resize-none border-0 focus:outline-none focus:ring-0 px-3 py-2 text-lg min-h-[28px] max-h-32 text-troy-ink placeholder:text-troy-ink/40"
+              rows={1}
+              disabled={!isConnected}
+            />
             <button
-              onClick={sendMessage}
+              onClick={() => submit(input)}
               disabled={!input.trim() || !isConnected}
-              className="px-6 py-3 bg-gradient-to-r from-troy-red to-troy-dark text-white rounded-2xl font-medium hover:shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 disabled:transform-none flex items-center gap-2"
+              className="w-11 h-11 rounded-full bg-troy-red text-white flex items-center justify-center hover:bg-troy-dark disabled:bg-troy-line disabled:text-troy-ink/30 transition-colors flex-shrink-0"
             >
-              <span className="hidden sm:inline">Send</span>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                />
-              </svg>
+              <SendOutlined />
             </button>
           </div>
-
-          {/* Enhanced Disclaimer */}
-          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-xs text-yellow-800 text-center flex items-center justify-center gap-2">
-              <span className="text-yellow-950">WARNING:</span>
-              <span>
-                This AI assistant provides general guidance only. Always consult
-                a healthcare professional for medical advice.
-              </span>
-            </p>
-          </div>
+          <p className="font-mono text-sm text-white text-center mt-3">
+            General guidance only — always confirm with a healthcare
+            professional.
+          </p>
         </div>
       </div>
     </div>

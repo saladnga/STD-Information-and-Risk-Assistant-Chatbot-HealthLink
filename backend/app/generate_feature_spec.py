@@ -72,11 +72,11 @@ def generate_feature_spec():
     try:
         with open(feature_spec_path, "w") as f:
             json.dump(feature_spec, f, indent=2)
-        print(f"✓ Created feature_spec.json at {feature_spec_path}")
-        print(f"  - Total features: {len(features)}")
-        print(f"  - Symptom features: {len(symptom_features)}")
-        print(f"  - Demographic features: {len(demographic_features)}")
-        print(f"  - Behavioral features: {len(behavioral_features)}")
+        print(f"- Created feature_spec.json at {feature_spec_path}")
+        print(f"- Total features: {len(features)}")
+        print(f"- Symptom features: {len(symptom_features)}")
+        print(f"- Demographic features: {len(demographic_features)}")
+        print(f"- Behavioral features: {len(behavioral_features)}")
         print(f"\nFirst 5 features: {features[:5]}")
         print(f"Last 5 features: {features[-5:]}")
         return True

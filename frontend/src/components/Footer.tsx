@@ -1,20 +1,16 @@
+import { useLocation } from "react-router-dom";
+
+const HIDDEN_PATHS = ["/chat"];
+
 export default function Footer() {
+  const location = useLocation();
+  if (HIDDEN_PATHS.includes(location.pathname)) return null;
+
   return (
-    <footer className="bg-gradient-to-r from-troy-red to-troy-dark text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">AI Health Assistant</span>
-          </div>
-          <div className="text-sm text-center sm:text-right">
-            <p>
-              © {new Date().getFullYear()} Troy HealthBot
-            </p>
-            <p className="text-xs text-troy-gray/80 mt-1">
-              Empowering students with intelligent health guidance
-            </p>
-          </div>
-        </div>
+    <footer className="bg-troy-red border-t border-troy-dark">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-1 font-mono text-xs">
+        <span>© {new Date().getFullYear()} Troy HealthLink</span>
+        <span>Empowering students with intelligent health guidance</span>
       </div>
     </footer>
   );

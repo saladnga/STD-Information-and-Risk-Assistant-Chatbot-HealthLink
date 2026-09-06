@@ -8,7 +8,8 @@ from typing import Optional
 # ============================================================================
 # SYSTEM PROMPT - Answer Only From Context
 # ============================================================================
-RAG_SYSTEM_PROMPT = """You are a medical information assistant. Your role is to answer questions based ONLY on the provided context from medical documents.
+RAG_SYSTEM_PROMPT = """
+You are a medical information assistant. Your role is to answer questions based ONLY on the provided context from medical documents.
 
 CRITICAL RULES - YOU MUST FOLLOW THESE STRICTLY:
 1. ANSWER ONLY FROM CONTEXT: Only use information explicitly stated in the provided context
@@ -34,8 +35,8 @@ Remember: It is better to say "I don't know" than to make up information. Patien
 # ============================================================================
 # USER PROMPT TEMPLATE
 # ============================================================================
-RAG_USER_PROMPT_TEMPLATE = """Context from medical documents:
-{context}
+RAG_USER_PROMPT_TEMPLATE = """
+Context from medical documents: {context}
 
 Question: {question}
 
@@ -45,7 +46,8 @@ Instructions:
 3. If the context doesn't contain enough information, use the no-answer response
 4. Do not add any information not explicitly stated in the context
 
-Answer:"""
+Answer:
+"""
 
 # ============================================================================
 # NO-ANSWER RESPONSE TEMPLATES
@@ -87,17 +89,19 @@ def format_rag_prompt(context: str, question: str) -> str:
     return RAG_USER_PROMPT_TEMPLATE.format(context=context, question=question)
 
 
-def format_citation(source: str, chunk_index: int, relevance: Optional[float] = None) -> str:
+def format_citation(
+    source: str, 
+    chunk_index: int, 
+    relevance: Optional[float] = None
+) -> str:
     """
     Format a citation for inclusion in the answer.
-    
     Args:
-        source: Source document filename
-        chunk_index: Chunk index number
-        relevance: Optional relevance score
-    
+    - source: Source document filename
+    - chunk_index: Chunk index number
+    - relevance: Optional relevance score
     Returns:
-        Formatted citation string
+    - Formatted citation string
     """
     if relevance is not None:
         return CITATION_FORMAT_WITH_RELEVANCE.format(
@@ -111,12 +115,10 @@ def format_citation(source: str, chunk_index: int, relevance: Optional[float] = 
 def get_no_answer_response(variant: int = 0) -> str:
     """
     Get a no-answer response text.
-    
     Args:
-        variant: Which variant to use (0-3)
-    
+    - variant: Which variant to use (0-3)
     Returns:
-        No-answer response text
+    - No-answer response text
     """
     if 0 <= variant < len(NO_ANSWER_RESPONSES):
         return NO_ANSWER_RESPONSES[variant]
@@ -126,12 +128,10 @@ def get_no_answer_response(variant: int = 0) -> str:
 def is_no_answer_response(text: str) -> bool:
     """
     Check if a response is a no-answer response.
-    
     Args:
-        text: Response text to check
-    
+    - text: Response text to check
     Returns:
-        True if the text is a no-answer response
+    - True if the text is a no-answer response
     """
     text_lower = text.lower().strip()
     
@@ -160,12 +160,10 @@ def is_no_answer_response(text: str) -> bool:
 def extract_citations_from_text(text: str) -> list:
     """
     Extract citations from answer text.
-    
     Args:
-        text: Answer text containing citations
-    
+    - text: Answer text containing citations
     Returns:
-        List of citation dictionaries with source and chunk_index
+    - List of citation dictionaries with source and chunk_index
     """
     import re
     
@@ -207,13 +205,11 @@ def extract_citations_from_text(text: str) -> list:
 def validate_answer_has_citations(text: str, min_citations: int = 1) -> bool:
     """
     Validate that an answer contains the required number of citations.
-    
     Args:
-        text: Answer text
-        min_citations: Minimum number of citations required
-    
+    - text: Answer text
+    - min_citations: Minimum number of citations required
     Returns:
-        True if answer has sufficient citations
+    - True if answer has sufficient citations
     """
     citations = extract_citations_from_text(text)
     return len(citations) >= min_citations
@@ -226,30 +222,32 @@ def enhance_prompt_with_examples(
 ) -> str:
     """
     Enhance a prompt with examples of good answers.
-    
     Args:
-        base_prompt: Base prompt template
-        include_citation_examples: Whether to include citation examples
-        include_no_answer_example: Whether to include no-answer example
-    
+    - base_prompt: Base prompt template
+    - include_citation_examples: Whether to include citation examples
+    - include_no_answer_example: Whether to include no-answer example
     Returns:
-        Enhanced prompt with examples
+    - Enhanced prompt with examples
     """
     examples = []
     
     if include_citation_examples:
-        examples.append("""
-EXAMPLE OF GOOD ANSWER WITH CITATIONS:
-Question: What are the treatment options for chlamydia?
-Answer: According to the medical documents, chlamydia is typically treated with antibiotics. The recommended treatments include doxycycline or azithromycin [Source: medical_guide.pdf, Chunk: 15]. Treatment should be completed as prescribed, and sexual partners should also be treated [Source: medical_guide.pdf, Chunk: 16].
-""")
+        examples.append(
+            """
+            EXAMPLE OF GOOD ANSWER WITH CITATIONS:
+            Question: What are the treatment options for chlamydia?
+            Answer: According to the medical documents, chlamydia is typically treated with antibiotics. The recommended treatments include doxycycline or azithromycin [Source: medical_guide.pdf, Chunk: 15]. Treatment should be completed as prescribed, and sexual partners should also be treated [Source: medical_guide.pdf, Chunk: 16].
+            """
+        )
     
     if include_no_answer_example:
-        examples.append("""
-EXAMPLE OF NO-ANSWER RESPONSE:
-Question: What is the recommended dosage for experimental drug XYZ?
-Answer: I don't have enough information in the provided documents to answer this question.
-""")
+        examples.append(
+            """
+            EXAMPLE OF NO-ANSWER RESPONSE:
+            Question: What is the recommended dosage for experimental drug XYZ?
+            Answer: I don't have enough information in the provided documents to answer this question.
+            """
+        )
     
     if examples:
         examples_text = "\n".join(examples)

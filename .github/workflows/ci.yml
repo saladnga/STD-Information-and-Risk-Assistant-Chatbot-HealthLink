@@ -34,11 +34,5 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - name: Smoke-test backend imports
-        working-directory: backend/app
-        env:
-          OPENAI_API_KEY: "sk-test-dummy-key-for-ci"
-          VITE_SUPABASE_URL: "https://ci-placeholder.supabase.co"
-          SUPABASE_SERVICE_KEY: "ci-placeholder-service-key"
-          ALLOWED_ORIGINS: "http://localhost:5173"
-        run: python -c "import main; print('Backend imports OK')"
+      - name: Run backend tests
+        run: python -m pytest tests/ -v

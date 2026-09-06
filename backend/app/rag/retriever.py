@@ -40,7 +40,6 @@ DEFAULT_RERANK_TOP_K = 10  # Number of candidates to rerank
 # Try to import cross-encoder for reranking (optional)
 try:
     from sentence_transformers import CrossEncoder
-
     CROSS_ENCODER_AVAILABLE = True
     # Initialize cross-encoder model (loaded lazily)
     _cross_encoder_model = None
@@ -87,21 +86,19 @@ def retrieve_relevant_chunks(
 ) -> List[Dict]:
     """
     Retrieve relevant document chunks using vector similarity.
-
     Args:
-        query: Search query
-        max_results: Maximum number of results to return
-        similarity_threshold: Minimum similarity score (0.0-1.0) to include results
-        use_reranking: Whether to use cross-encoder reranking
-        rerank_top_k: Number of candidates to retrieve for reranking (should be >= max_results)
-
+    - query: Search query
+    - max_results: Maximum number of results to return
+    - similarity_threshold: Minimum similarity score (0.0-1.0) to include results
+    - use_reranking: Whether to use cross-encoder reranking
+    - rerank_top_k: Number of candidates to retrieve for reranking (should be >= max_results)
     Returns:
-        List of chunks sorted by relevance (reranked if enabled)
+    - List of chunks sorted by relevance (re-ranked if enabled)
     """
+    
     # Step 1: Vector retrieval
     retrieve_count = rerank_top_k if use_reranking else max_results
     retrieve_count = max(retrieve_count, max_results)
-
     query_embedding = create_query_embedding(query)
 
     response = supabase.rpc(
@@ -146,17 +143,19 @@ def retrieve_relevant_chunks(
     return chunks
 
 
-def rerank_chunks(query: str, chunks: List[Dict], top_k: int = 5) -> List[Dict]:
+def rerank_chunks(
+    query: str, 
+    chunks: List[Dict], 
+    top_k: int = 5
+) -> List[Dict]:
     """
-    Rerank chunks using cross-encoder for better relevance.
-
+    Re-rank chunks using cross-encoder for better relevance.
     Args:
-        query: Search query
-        chunks: List of chunk dictionaries
-        top_k: Number of top chunks to return after reranking
-
+    - query: Search query
+    - chunks: List of chunk dictionaries
+    - top_k: Number of top chunks to return after reranking
     Returns:
-        Reranked list of chunks
+    - Re-ranked list of chunks
     """
     if not CROSS_ENCODER_AVAILABLE:
         logger.warning("Cross-encoder not available, skipping reranking")
@@ -170,16 +169,15 @@ def rerank_chunks(query: str, chunks: List[Dict], top_k: int = 5) -> List[Dict]:
     try:
         # Prepare pairs for cross-encoder: (query, chunk_text)
         pairs = [(query, chunk["text"]) for chunk in chunks]
-
         # Get relevance scores from cross-encoder
         scores = cross_encoder.predict(pairs)
-
-        # Add rerank scores to chunks and sort
+        
+        # Add re-rank scores to chunks and sort
         for i, chunk in enumerate(chunks):
             chunk["rerank_score"] = float(scores[i])
             chunk["reranked"] = True
-
-        # Sort by rerank score (higher is better)
+            
+        # Sort by re-rank score (higher is better)
         reranked_chunks = sorted(chunks, key=lambda x: x["rerank_score"], reverse=True)
 
         # Update relevance_score to be the rerank score for consistency
@@ -199,7 +197,6 @@ def rerank_chunks(query: str, chunks: List[Dict], top_k: int = 5) -> List[Dict]:
 def build_grounded_context(chunks: List[Dict], include_relevance: bool = True) -> str:
     """
     Build a grounded context string with proper citations.
-
     Format:
     [Source: filename.pdf, Chunk: 0, Relevance: 0.85]
     Text content...
@@ -208,11 +205,10 @@ def build_grounded_context(chunks: List[Dict], include_relevance: bool = True) -
     Text content...
 
     Args:
-        chunks: List of chunk dictionaries
-        include_relevance: Whether to include relevance scores in citations
-
+    - chunks: List of chunk dictionaries
+    - include_relevance: Whether to include relevance scores in citations
     Returns:
-        Formatted context string with citations
+    - Formatted context string with citations
     """
     context_parts = []
     for chunk in chunks:
@@ -233,19 +229,20 @@ def build_grounded_context(chunks: List[Dict], include_relevance: bool = True) -
 
 
 def generate_answer(
-    context: str, question: str, temperature: float = 0.1, max_tokens: int = 1000
+    context: str, 
+    question: str, 
+    temperature: float = 0.1, 
+    max_tokens: int = 1000
 ) -> Tuple[str, Optional[float]]:
     """
     Generate an answer using OpenAI with retrieved context.
-
     Args:
-        context: Grounded context with citations
-        question: User question
-        temperature: Lower temperature (0.1) for more factual, deterministic responses
-        max_tokens: Maximum tokens in response
-
+    - context: Grounded context with citations
+    - question: User question
+    - temperature: Lower temperature (0.1) for more factual, deterministic responses
+    - max_tokens: Maximum tokens in response
     Returns:
-        Tuple of (answer, confidence)
+    - Tuple of (answer, confidence)
     """
     system_prompt = get_system_prompt()
     user_prompt = format_rag_prompt(context, question)
@@ -304,7 +301,7 @@ def extract_citations_from_answer(answer: str, chunks: List[Dict]) -> List[Dict]
     Uses regex patterns to find citations in the format [Source: filename, Chunk: N].
 
     Returns:
-        List of citation dictionaries
+    - List of citation dictionaries
     """
     from rag.templates import extract_citations_from_text
 
@@ -378,17 +375,15 @@ def retrieve_and_answer(
 ) -> Tuple[str, List[Dict], Optional[float], List[Dict]]:
     """
     Retrieve relevant chunks and generate an answer with citations.
-
     Args:
-        question: User question
-        max_results: Maximum number of chunks to return
-        temperature: Temperature for LLM generation
-        similarity_threshold: Minimum similarity score for chunks (0.0-1.0)
-        use_reranking: Whether to use cross-encoder reranking
-        rerank_top_k: Number of candidates to retrieve for reranking
-
+    - question: User question
+    - max_results: Maximum number of chunks to return
+    - temperature: Temperature for LLM generation
+    - similarity_threshold: Minimum similarity score for chunks (0.0-1.0)
+    - use_reranking: Whether to use cross-encoder reranking
+    - rerank_top_k: Number of candidates to retrieve for reranking
     Returns:
-        Tuple of (answer, sources, confidence, citations)
+    - Tuple of (answer, sources, confidence, citations)
     """
     # Retrieve relevant chunks with optional reranking and similarity gating
     chunks = retrieve_relevant_chunks(
@@ -417,8 +412,7 @@ def retrieve_and_answer(
             "chunk_index": chunk.get("chunk_index", -1),
             "chunk_id": chunk.get("chunk_id"),
             "similarity_score": chunk.get("similarity_score"),
-            "relevance_score": chunk.get("similarity_score")
-            or chunk.get("relevance_score"),
+            "relevance_score": chunk.get("similarity_score") or chunk.get("relevance_score"),
             "rerank_score": chunk.get("rerank_score"),
             "reranked": chunk.get("reranked", False),
             "initial_rank": chunk.get("initial_rank"),

@@ -10,17 +10,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import logging
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from rate_limiter import limiter
 
 # Load environment variables
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Add project root to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import routers
-from routers import predict, train, rag, auth, chatbot
+from routers import predict, train, rag, auth, chat, sessions
 from model import load_model
 
 
@@ -29,10 +33,10 @@ from model import load_model
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown."""
     # Startup: Load model and initialize NLP
-    print("=" * 60)
-    print("Initializing Troy HealthLink API")
-    print("=" * 60)
-    print("Loading model...")
+    logger.info("=" * 60)
+    logger.info("Initializing Troy HealthLink API")
+    logger.info("=" * 60)
+    logger.info("Loading model...")
     try:
         model, label_encoder, feature_columns = load_model()
         # Store in app state for WebSocket access
@@ -40,27 +44,26 @@ async def lifespan(app: FastAPI):
         app.state.nlp = None  # No NLP dependencies for now
         app.state.label_encoder = label_encoder
         app.state.feature_columns = feature_columns
-        print("✓ Model loaded successfully")
+        logger.info("Model loaded successfully")
     except Exception as e:
-        print(f"⚠ Warning: Could not load model: {e}")
-        print("  Some endpoints may not work until model is trained.")
-        print("  Train the model using: POST /train")
+        logger.warning(f"Could not load model: {e}")
+        logger.warning("Some endpoints may not work until model is trained.")
+        logger.warning("Train the model using: POST /train")
         # Set None values to prevent AttributeError
         app.state.model = None
         app.state.nlp = None
         app.state.label_encoder = None
         app.state.feature_columns = []
 
-    print("✓ Symptom extraction ready (regex-based, no NLP dependencies)")
-    print("=" * 60)
-    print("Server is ready!")
-    print("=" * 60)
-    print()
+    logger.info("Symptom extraction ready (regex-based, no NLP dependencies)")
+    logger.info("=" * 60)
+    logger.info("Server is ready!")
+    logger.info("=" * 60)
 
     yield  # Application runs here
 
     # Shutdown: Cleanup if needed
-    print("\nShutting down...")
+    logger.info("Shutting down...")
 
 
 # Create FastAPI app
@@ -70,6 +73,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Add CORS middleware
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
@@ -87,7 +93,8 @@ app.include_router(auth.router)
 app.include_router(predict.router)
 app.include_router(train.router)
 app.include_router(rag.router)
-app.include_router(chatbot.router)
+app.include_router(chat.router)
+app.include_router(sessions.router)
 
 
 # Root endpoint

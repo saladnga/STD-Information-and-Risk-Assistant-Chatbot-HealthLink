@@ -103,7 +103,13 @@ async def upload_pdf(
             status_code=400,
             detail="Uploaded file is empty"
         )
-    
+
+    if ocr_dpi < 100 or ocr_dpi > 1200:
+        raise HTTPException(
+            status_code=400,
+            detail="ocr_dpi must be between 100 and 1200"
+        )
+
     try:
         # Create PDF directory if it doesn't exist
         current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -127,14 +133,7 @@ async def upload_pdf(
             f.write(file_content)
         
         logger.info(f"Saved PDF file: {file_path} ({file_size} bytes)")
-        
-        # Validate OCR parameters
-        if ocr_dpi < 100 or ocr_dpi > 1200:
-            raise HTTPException(
-                status_code=400,
-                detail="ocr_dpi must be between 100 and 1200"
-            )
-        
+
         # Ingest the PDF into vector database
         logger.info(f"Ingesting PDF: {file_path} (use_ocr={use_ocr}, ocr_fallback={ocr_fallback}, ocr_dpi={ocr_dpi})")
         result = ingest_pdf(

@@ -1,0 +1,240 @@
+{
+  "description": "Comprehensive training report with metrics, class counts, calibration scores, and hyperparameters",
+  "timestamp": "2026-08-09T11:13:39.790740",
+  "model_type": "XGBoost",
+  "num_classes": 6,
+  "num_features": 18,
+  "train_size": 80000,
+  "test_size": 20000,
+  "metrics": {
+    "logloss": 0.8382135243880242,
+    "top1_accuracy": 0.6183,
+    "top2_accuracy": 0.73805,
+    "accuracy": 0.6183,
+    "macro_avg": {
+      "precision": 0.8265835648998973,
+      "recall": 0.6429939816074662,
+      "f1_score": 0.6453643273341448,
+      "support": 20000
+    },
+    "weighted_avg": {
+      "precision": 0.8757519432828698,
+      "recall": 0.6183,
+      "f1_score": 0.6692835814139451,
+      "support": 20000
+    }
+  },
+  "calibration": {
+    "avg_brier_score": 0.06770430182041919,
+    "per_class_calibration": [
+      {
+        "class": "BV",
+        "brier_score": 0.06193722753408547,
+        "calibration_curve": {
+          "fraction_of_positives": [
+            0.034565841905291446,
+            0.1503267973856209,
+            0.2727272727272727,
+            1.0
+          ],
+          "mean_predicted_value": [
+            0.020499692579237793,
+            0.1291308886498323,
+            0.2183587903326208,
+            0.9999346066320037
+          ]
+        }
+      },
+      {
+        "class": "Chlamydia",
+        "brier_score": 0.09625525199111741,
+        "calibration_curve": {
+          "fraction_of_positives": [
+            0.0,
+            0.26193548387096777,
+            0.26688769167012016,
+            0.24725274725274726,
+            1.0
+          ],
+          "mean_predicted_value": [
+            2.0968552518677976e-05,
+            0.17166636426762868,
+            0.23118172240761173,
+            0.31855713043894085,
+            0.9998489637737689
+          ]
+        }
+      },
+      {
+        "class": "Gonorrhea",
+        "brier_score": 0.06064221421172698,
+        "calibration_curve": {
+          "fraction_of_positives": [
+            0.04132973944294699,
+            0.1394897806952111,
+            0.29411764705882354,
+            1.0
+          ],
+          "mean_predicted_value": [
+            0.022167736546278193,
+            0.12878981177622428,
+            0.21338419528568492,
+            0.9999349828653558
+          ]
+        }
+      },
+      {
+        "class": "Healthy",
+        "brier_score": 0.09513225768465157,
+        "calibration_curve": {
+          "fraction_of_positives": [
+            0.0,
+            0.15730337078651685,
+            0.21433905899925318,
+            0.213183145598665,
+            0.1994425518736451,
+            0.15942028985507245
+          ],
+          "mean_predicted_value": [
+            1.1299488572987568e-05,
+            0.17407453495464967,
+            0.2718292095262315,
+            0.35381608630748507,
+            0.4382807967388877,
+            0.51948598905462
+          ]
+        }
+      },
+      {
+        "class": "Herpes",
+        "brier_score": 0.0836201691742027,
+        "calibration_curve": {
+          "fraction_of_positives": [
+            0.002242403856934634,
+            0.21343928621218458,
+            0.22541156606162938,
+            0.25,
+            1.0
+          ],
+          "mean_predicted_value": [
+            0.0007180053319705775,
+            0.15870952939103875,
+            0.22709111860529085,
+            0.3195866048336029,
+            0.9999015938050752
+          ]
+        }
+      },
+      {
+        "class": "UTI",
+        "brier_score": 0.008638690326730952,
+        "calibration_curve": {
+          "fraction_of_positives": [
+            0.010567632850241546,
+            1.0
+          ],
+          "mean_predicted_value": [
+            0.008698508302434979,
+            0.999958619648634
+          ]
+        }
+      }
+    ],
+    "note": "Brier score: lower is better (0 = perfect calibration). Calibration curve shows predicted probability vs actual frequency."
+  },
+  "class_counts": {
+    "train": {
+      "BV": 14347,
+      "Chlamydia": 14618,
+      "Gonorrhea": 14200,
+      "Healthy": 8002,
+      "Herpes": 14375,
+      "UTI": 14458
+    },
+    "test": {
+      "BV": 3586,
+      "Chlamydia": 3655,
+      "Gonorrhea": 3550,
+      "Healthy": 2000,
+      "Herpes": 3594,
+      "UTI": 3615
+    },
+    "train_total": 80000,
+    "test_total": 20000
+  },
+  "classification_report": {
+    "BV": {
+      "precision": 1.0,
+      "recall": 0.5992749581706637,
+      "f1-score": 0.7494333042720139,
+      "support": 3586.0
+    },
+    "Chlamydia": {
+      "precision": 0.8380281690140845,
+      "recall": 0.32558139534883723,
+      "f1-score": 0.4689655172413793,
+      "support": 3655.0
+    },
+    "Gonorrhea": {
+      "precision": 1.0,
+      "recall": 0.6056338028169014,
+      "f1-score": 0.7543859649122807,
+      "support": 3550.0
+    },
+    "Healthy": {
+      "precision": 0.20673076923076922,
+      "recall": 0.946,
+      "f1-score": 0.33931133428981347,
+      "support": 2000.0
+    },
+    "Herpes": {
+      "precision": 0.9147424511545293,
+      "recall": 0.4298831385642738,
+      "f1-score": 0.5848949460533788,
+      "support": 3594.0
+    },
+    "UTI": {
+      "precision": 1.0,
+      "recall": 0.9515905947441217,
+      "f1-score": 0.9751948972360028,
+      "support": 3615.0
+    },
+    "accuracy": 0.6183,
+    "macro avg": {
+      "precision": 0.8265835648998973,
+      "recall": 0.6429939816074662,
+      "f1-score": 0.6453643273341448,
+      "support": 20000.0
+    },
+    "weighted avg": {
+      "precision": 0.8757519432828698,
+      "recall": 0.6183,
+      "f1-score": 0.6692835814139451,
+      "support": 20000.0
+    }
+  },
+  "hyperparameters": {
+    "objective": "multi:softprob",
+    "num_class": 6,
+    "eval_metric": "mlogloss",
+    "random_state": 42,
+    "max_depth": 6,
+    "learning_rate": 0.05,
+    "n_estimators": 500,
+    "min_child_weight": 2,
+    "subsample": 0.85,
+    "colsample_bytree": 0.85,
+    "gamma": 0.1,
+    "reg_alpha": 0.1,
+    "reg_lambda": 1.0,
+    "early_stopping_rounds": 20,
+    "best_iteration": null
+  },
+  "training_config": {
+    "test_size": 0.2,
+    "stratify": true,
+    "class_weights": "balanced",
+    "sample_weights": true,
+    "early_stopping": true
+  }
+}

@@ -1,6 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { API_URL } from "../lib/api";
+import { Link, useNavigate } from "react-router-dom";
+import { authRequest } from "../lib/api";
+import AuthLayout from "../components/AuthLayout";
+import FormField from "../components/FormField";
+import FormError from "../components/FormError";
+import SubmitButton from "../components/SubmitButton";
+import { validatePasswordStrength } from "../lib/validation";
 
 function Signup() {
   const [email, setEmail] = useState("");
@@ -16,23 +21,22 @@ function Signup() {
     setError("");
     setLoading(true);
 
+    const passwordError = validatePasswordStrength(password);
+
+    if (passwordError) {
+      setError(passwordError);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_URL}/auth/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          first_name: firstName,
-          last_name: lastName,
-        }),
+      const { ok, data } = await authRequest("/auth/signup", {
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName,
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+      if (ok) {
         navigate("/chat");
       } else {
         setError(data.detail || "Signup failed");
@@ -44,97 +48,54 @@ function Signup() {
     }
   };
 
- return (
-    <div className="flex justify-center items-center min-h-screen bg-troy-gray">
-    <form
-      onSubmit={handleSignup}
-      className="bg-white p-8 rounded-2xl shadow-lg w-96 border-t-4 border-troy-red"
-    >
-      <h1 className="text-3xl font-bold text-center mb-6 text-troy-red">
-        Sign Up
-      </h1>
+  return (
+    <AuthLayout title="Sign Up">
+      <form onSubmit={handleSignup} className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <FormField
+            label="First Name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+          <FormField
+            label="Last Name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+        </div>
 
-      <div className="mb-4">
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
-          First Name
-        </label>
-        <input
-          type="text"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          required
-          className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-troy-red"
-        />
-      </div>
-
-      <div className="mb-4">
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
-          Last Name
-        </label>
-        <input
-          type="text"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          required
-          className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-troy-red"
-        />
-      </div>
-
-      <div className="mb-4">
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
-          Email
-        </label>
-        <input
+        <FormField
+          label="Email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-troy-red"
         />
-      </div>
 
-      <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
-          Password
-        </label>
-        <input
+        <FormField
+          label="Password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-troy-red"
         />
-      </div>
 
-      {error && (
-        <p className="text-red-600 text-sm text-center mb-4 bg-red-50 p-2 rounded">
-          {error}
+        <FormError message={error} />
+
+        <SubmitButton loading={loading} loadingText="Signing up...">
+          Sign Up
+        </SubmitButton>
+
+        <p className="text-center text-base text-troy-ink/70">
+          Already have an account?{" "}
+          <Link to="/login" className="text-troy-red font-semibold hover:underline">
+            Login
+          </Link>
         </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className={`w-full py-2 rounded-lg font-semibold text-white transition ${
-          loading
-            ? "bg-troy-dark cursor-not-allowed"
-            : "bg-troy-red hover:bg-troy-dark"
-        }`}
-      >
-        {loading ? "Signing up..." : "Sign Up"}
-      </button>
-
-      <p className="text-center text-sm text-gray-600 mt-4">
-        Already have an account?{" "}
-        <a
-          href="/login"
-          className="text-troy-red font-semibold hover:underline"
-        >
-          Login
-        </a>
-      </p>
-    </form>
-  </div>
+      </form>
+    </AuthLayout>
   );
 }
 

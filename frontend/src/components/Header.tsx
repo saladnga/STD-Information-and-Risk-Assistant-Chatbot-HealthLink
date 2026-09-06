@@ -1,231 +1,141 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { MenuOutlined, CloseOutlined } from "@ant-design/icons";
 import logo from "../assets/logo.png";
+import { clearAuth, getToken, getUser } from "../lib/storage";
+import { useNotify } from "../lib/notify";
+
+const HIDDEN_NAV_PATHS = ["/", "/login", "/signup"];
+
+// Desktop: small pill-style links sitting inside the red header bar.
+const navLinkClass =
+  "text-troy-red text-lg px-1 font-mono border bg-troy-ink hover:opacity-90";
+const ctaLinkClass =
+  "bg-troy-red text-white hover:bg-troy-dark transition-colors text-sm font-semibold px-4 py-2 rounded-lg";
+
+// Mobile: full-width rows, own sizing/coloring - the desktop pill classes above read as tiny cramped chips at this size.
+const mobileLinkClass =
+  "block w-full text-center py-4 text-xl font-mono text-troy-ink hover:bg-troy-line rounded-lg transition-colors";
+const mobileCtaLinkClass =
+  "block w-full text-center py-4 text-xl font-mono font-semibold bg-troy-red text-white hover:bg-troy-dark rounded-lg transition-colors";
 
 export default function Header() {
   const navigate = useNavigate();
+  const notify = useNotify();
   const [user, setUser] = useState<{ first_name?: string } | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const isHiddenNavPage = HIDDEN_NAV_PATHS.includes(location.pathname);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("access_token");
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
-    } else {
-      setUser(null);
-    }
+    setUser(getToken() ? getUser() : null);
   }, [location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("current_session_id");
-    setUser(null);
-    setIsMobileMenuOpen(false);
-    navigate("/");
+    notify.confirm({
+      title: "Log out?",
+      content: "Are you sure you want to log out?",
+      danger: true,
+      onOk: () => {
+        clearAuth();
+        setUser(null);
+        setIsMobileMenuOpen(false);
+        navigate("/");
+        notify.success("Logged out");
+      },
+    });
   };
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
+  const closeMenu = () => setIsMobileMenuOpen(false);
 
-  const handleLogoClick = () => {
-    if (user) {
-      navigate("/chat");
-    } else {
-      navigate("/");
-    }
-  };
+  const handleLogoClick = () => navigate(user ? "/chat" : "/");
 
-  // Determine which buttons to show
-  const renderButtons = () => {
-    // Hide all buttons on homepage, login, and signup pages
-    if (
-      location.pathname === "/" ||
-      location.pathname === "/login" ||
-      location.pathname === "/signup"
-    ) {
-      return null;
-    }
+  const renderButtons = (variant: "desktop" | "mobile" = "desktop") => {
+    if (isHiddenNavPage) return null;
 
-    // If user is logged in
-    if (user) {
-      // Show different buttons based on current page
-      if (location.pathname === "/profile") {
-        return (
-          <>
-            <Link
-              to="/chat"
-              className="text-troy-red bg-white hover:bg-troy-red hover:text-white px-4 py-1 rounded-lg transition duration-200 text-sm font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Back to Chat
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="bg-white text-troy-red font-medium px-4 py-1 rounded-lg hover:bg-gray-100 transition duration-200 text-sm"
-            >
-              Logout
-            </button>
-          </>
-        );
-      } else if (location.pathname === "/chat") {
-        // In chat window - only show Profile and Logout, no Chat button
-        return (
-          <>
-            <Link
-              to="/profile"
-              className="text-troy-red bg-white hover:opacity-85 px-4 py-1 rounded-lg transition duration-200 text-sm font-bold"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Profile
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="bg-troy-red text-white border border-white font-bold px-4 py-1 rounded-lg hover:opacity-85 transition duration-200 text-sm"
-            >
-              Logout
-            </button>
-          </>
-        );
-      } else {
-        // Other logged in pages (login, signup, etc.) - show Chat, Profile, Logout
-        return (
-          <>
-            <Link
-              to="/chat"
-              className="text-troy-red bg-white hover:opacity-85 px-4 py-1 rounded-lg transition duration-200 text-sm font-bold"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Chat
-            </Link>
-            <Link
-              to="/profile"
-              className="text-troy-red bg-white hover:opacity-85 px-4 py-1 rounded-lg transition duration-200 text-sm font-bold" 
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Profile
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="bg-troy-red text-white border border-white font-bold px-4 py-1 rounded-lg hover:opacity-85 transition duration-200 text-sm"
-            >
-              Logout
-            </button>
-          </>
-        );
-      }
-    } else {
-      // User not logged in - show login/signup
+    const linkClass = variant === "mobile" ? mobileLinkClass : navLinkClass;
+    const ctaClass = variant === "mobile" ? mobileCtaLinkClass : ctaLinkClass;
+
+    if (!user) {
       return (
         <>
-          <Link
-            to="/login"
-            className="text-troy-red bg-white hover:bg-troy-red hover:text-white px-4 py-1 rounded-lg transition duration-200 text-sm font-medium"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
+          <Link to="/login" className={linkClass} onClick={closeMenu}>
             Login
           </Link>
-          <Link
-            to="/signup"
-            className="text-white bg-troy-red hover:bg-troy-dark px-4 py-1 rounded-lg transition duration-200 text-sm font-medium border border-white"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
+          <Link to="/signup" className={ctaClass} onClick={closeMenu}>
             Sign Up
           </Link>
         </>
       );
     }
+
+    return (
+      <>
+        {location.pathname !== "/chat" && (
+          <Link to="/chat" className={linkClass} onClick={closeMenu}>
+            Chat
+          </Link>
+        )}
+        {location.pathname !== "/profile" && (
+          <Link to="/profile" className={linkClass} onClick={closeMenu}>
+            Profile
+          </Link>
+        )}
+        <button onClick={handleLogout} className={linkClass}>
+          Logout
+        </button>
+      </>
+    );
   };
 
   return (
-    <header className="bg-troy-red text-white shadow-lg relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div
-            onClick={handleLogoClick}
-            className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
-          >
-            <img
-              src={logo}
-              alt="Troy HealthBot logo"
-              className="h-8 w-auto sm:h-10"
-            />
-          </div>
+    <>
+      <header className="sticky top-0 z-40 bg-troy-red backdrop-blur border-b border-troy-line px-4">
+        <div className="max-w-full mx-auto">
+          <div className="flex justify-between items-center h-16">
+            <div
+              onClick={handleLogoClick}
+              className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
+            >
+              <img
+                src={logo}
+                alt="Troy HealthBot logo"
+                className="h-8 w-auto sm:h-12"
+              />
+            </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-3">
-            {user &&
-              location.pathname !== "/" &&
-              location.pathname !== "/login" &&
-              location.pathname !== "/signup" && (
-                <span className="text-base mr-2">
-                  Welcome, {user.first_name || "User"}
-                </span>
-              )}
-            {renderButtons()}
-          </nav>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-5">
+              {renderButtons()}
+            </nav>
 
-          {/* Mobile menu button - hide on homepage, login, and signup */}
-          {location.pathname !== "/" &&
-            location.pathname !== "/login" &&
-            location.pathname !== "/signup" && (
+            {/* Mobile menu button */}
+            {!isHiddenNavPage && (
               <button
                 onClick={toggleMobileMenu}
-                className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-troy-dark focus:outline-none focus:ring-2 focus:ring-white transition-colors"
+                aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-troy-ink hover:bg-troy-line focus:outline-none focus:ring-2 focus:ring-troy-red transition-colors text-xl"
               >
-                <svg
-                  className={`${isMobileMenuOpen ? "hidden" : "block"} h-6 w-6`}
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-                <svg
-                  className={`${isMobileMenuOpen ? "block" : "hidden"} h-6 w-6`}
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                {isMobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
               </button>
             )}
-        </div>
-      </div>
-
-      {/* Mobile Navigation Menu - hide on homepage, login, and signup */}
-      {location.pathname !== "/" &&
-        location.pathname !== "/login" &&
-        location.pathname !== "/signup" && (
-          <div className={`md:hidden ${isMobileMenuOpen ? "block" : "hidden"}`}>
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-troy-dark border-t border-troy-red">
-              {user && (
-                <div className="px-3 py-2 text-sm text-troy-gray border-b border-troy-red/20 mb-2">
-                  Welcome, {user.first_name || "User"}
-                </div>
-              )}
-              <div className="flex flex-col space-y-2 px-3">
-                {renderButtons()}
-              </div>
-            </div>
           </div>
-        )}
-    </header>
+        </div>
+      </header>
+
+      {/* Mobile Navigation Menu*/}
+      {!isHiddenNavPage && (
+        <div
+          className={`md:hidden fixed inset-x-0 top-16 bottom-0 bg-troy-surface z-30 ${
+            isMobileMenuOpen ? "block" : "hidden"
+          }`}
+        >
+          <nav className="flex flex-col gap-2 p-4">
+            {renderButtons("mobile")}
+          </nav>
+        </div>
+      )}
+    </>
   );
 }

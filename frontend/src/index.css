@@ -8,16 +8,30 @@
   box-sizing: border-box;
 }
 
+:root {
+  color-scheme: dark;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+  background-color: #171915; /* troy-clinic */
+  color: #f1efea; /* troy-ink */
+  font-family: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+input,
+select,
+textarea {
+  background-color: #1f221c; /* troy-surface */
+  color: #f1efea; /* troy-ink */
+}
+
 /* Smooth scrolling */
 html {
+  background-color: #171915; /* troy-clinic, avoids a white flash on short pages */
   scroll-behavior: smooth;
 }
 
@@ -27,14 +41,34 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #1f221c; /* troy-surface */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: #35392f; /* troy-line */
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #4f6357; /* troy-sage */
+}
+
+/* PulseTrace typing indicator: draws the line, then retracts it, on loop */
+.pulse-trace-animated path {
+  stroke-dasharray: 140;
+  stroke-dashoffset: 280;
+  animation: pulse-draw 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse-draw {
+  0% { stroke-dashoffset: 280; }
+  50% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -280; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-trace-animated path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
 }

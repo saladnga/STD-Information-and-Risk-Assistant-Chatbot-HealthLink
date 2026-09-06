@@ -29,15 +29,32 @@ _model = None
 _label_encoder = None
 
 
+# Words that flip a matched symptom from "present" to "denied" when they
+# appear shortly before it, e.g. "no odor", "denies pain", "don't have itching".
+NEGATION_WORDS = {
+    "no", "not", "n't", "dont", "don't", "denies", "denied",
+    "without", "never", "none", "negative",
+}
+NEGATION_WINDOW_WORDS = 4  # how many words back to look for a negation cue
+
+
+def _is_negated(text: str, match_start: int) -> bool:
+    """True if a negation word appears within a few words before this match."""
+    preceding_words = text[:match_start].split()[-NEGATION_WINDOW_WORDS:]
+    return any(w.strip(".,!?") in NEGATION_WORDS for w in preceding_words)
+
+
 def process_text_to_feature(text: str, base_feature: list) -> dict:
     """
-    Convert text description to feature dictionary using simple regex/substring matching.
+    Convert text description to feature dictionary using regex phrase matching.
     No spaCy dependency - uses symptom_map.json for pattern matching.
-    
+    A phrase preceded by a negation word ("no", "not", "denies", ...) within
+    NEGATION_WINDOW_WORDS words is treated as denied, not present.
+
     Args:
         text: Text description of symptoms
         base_feature: List of feature column names in exact training order
-    
+
     Returns:
         Dictionary with all features from base_feature, values set to 0 or 1
     """
@@ -48,37 +65,22 @@ def process_text_to_feature(text: str, base_feature: list) -> dict:
     text_lower = text.lower().strip()
     text_normalized = re.sub(r'\s+', ' ', text_lower)  # Normalize whitespace
 
-    # 3. Match symptom phrases from symptom_map using substring matching
-    # Sort by length (longest first) to match more specific phrases first
+    # 3. Match symptom phrases from symptom_map, longest first so more specific
+    # phrases win over shorter ones they contain.
     symptom_phrases = sorted(symptom_map.keys(), key=len, reverse=True)
-    
+
     for phrase in symptom_phrases:
         phrase_lower = phrase.lower().strip()
-        # Check if phrase appears in text (word boundary matching for better accuracy)
-        # Use word boundary regex for whole-word matching when possible
-        if len(phrase_lower.split()) == 1:
-            # Single word - use word boundary
-            pattern = r'\b' + re.escape(phrase_lower) + r'\b'
-            if re.search(pattern, text_normalized, re.IGNORECASE):
-                feature_name = symptom_map[phrase]
-                if feature_name and feature_name in features:
-                    features[feature_name] = 1
-        else:
-            # Multi-word phrase - use simple substring match
-            if phrase_lower in text_normalized:
-                feature_name = symptom_map[phrase]
-                if feature_name and feature_name in features:
-                    features[feature_name] = 1
+        pattern = r'\b' + re.escape(phrase_lower) + r'\b'
+        match = re.search(pattern, text_normalized, re.IGNORECASE)
+        if match and not _is_negated(text_normalized, match.start()):
+            feature_name = symptom_map[phrase]
+            if feature_name and feature_name in features:
+                features[feature_name] = 1
 
-    # Add default demographic / behavioral attributes (if they exist in base_feature)
-    if "age" in features:
-        features["age"] = 30
-    if "new_partners_last_3_months" in features:
-        features["new_partners_last_3_months"] = 1
-    if "condom_use_consistency_never" in features:
-        features["condom_use_consistency_never"] = 0
-    if "condom_use_consistency_sometimes" in features:
-        features["condom_use_consistency_sometimes"] = 1
+    # Demographic/behavioral fields default to 0 (not collected) rather than a
+    # fabricated value - previously every prediction was silently fed age=30,
+    # new_partners=1, condom=sometimes regardless of who was actually asking.
 
     # Ensure all base_feature columns are present (defensive check)
     for col in base_feature:
@@ -130,11 +132,6 @@ def train_model():
 
     # 1. Load dataset
     try:
-        # csv_path = os.path.join(
-        #     os.path.dirname(current_dir), "..", "synthetic_data.csv"
-        # )
-        # csv_path = os.path.abspath(csv_path)
-        # df = pd.read_csv(csv_path)
         csv_path = os.path.join(current_dir, "synthetic_data.csv")
         df = pd.read_csv(csv_path)
     except FileNotFoundError:

@@ -33,8 +33,7 @@ backend/app/
 ├── feature_spec.json       # Feature specification
 ├── label_encoder.json      # Class mappings
 ├── training_report.json    # Training metrics
-├── symptom_map.json        # Symptom text → feature mapping
-├── symptom_target_rules.json  # NLP symptom detection rules
+├── symptom_map.json        # Symptom text → feature mapping (used by model.py's phrase matching)
 ├── question_bank.json      # Follow-up questions per disease-pair
 └── synthetic_data.csv      # Training dataset
 ```
@@ -161,9 +160,8 @@ The RAG system allows you to:
 
 ### Adding New Symptoms
 
-1. Update `symptom_target_rules.json` with new symptom detection rules
-2. Update `symptom_map.json` with symptom → feature mapping
-3. Retrain the model
+1. Add the new phrase → feature mapping to `symptom_map.json`
+2. Retrain the model
 
 ### Adding New Diseases
 

@@ -1,113 +1,97 @@
-import background from "../assets/troycampus.png";
 import { Link } from "react-router-dom";
 import {
   LockOutlined,
   ThunderboltOutlined,
   HourglassOutlined,
+  WarningOutlined,
 } from "@ant-design/icons";
+import hero from "../assets/hero.webp";
+
+const FEATURES = [
+  {
+    icon: <ThunderboltOutlined />,
+    title: "AI-powered",
+    description: "Trained on clinical symptom patterns.",
+  },
+  {
+    icon: <LockOutlined />,
+    title: "Confidential",
+    description: "Your conversations stay private, always.",
+  },
+  {
+    icon: <HourglassOutlined />,
+    title: "24/7 available",
+    description: "No appointment needed.",
+  },
+];
 
 export default function Homepage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-troy-gray to-troy-white">
-      {/* Hero Section */}
-      <section
-        className="relative flex flex-col items-center justify-center min-h-screen bg-cover bg-center text-center text-white px-4 sm:px-6 lg:px-8"
-        style={{
-          backgroundImage: `url(${background})`,
-        }}
-      >
-        {/* Improved Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/40"></div>
+    <div className="flex flex-col min-h-[calc(100vh-4rem)] bg-troy-clinic">
+      {/* Hero */}
+      <section className="flex-1 grid lg:grid-cols-2">
+        <div className="bg-troy-surface text-white px-6 sm:px-12 lg:px-16 flex flex-col justify-center">
+          <h1 className="font-display font-bold text-5xl sm:text-7xl leading-[1.05] mb-4 [text-wrap:balance] text-troy-red">
+            Ask what you'd never say out loud.
+          </h1>
+          <p className="text-white text-2xl mb-4">
+            Private, AI-guided health answers for Troy University students - no
+            waiting room, no judgment.
+          </p>
 
-        {/* Hero Content */}
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <div className="space-y-8">
-            {/* Main Heading */}
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
-                <span className="block">Welcome to</span>
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white to-troy-gray">
-                  Troy HealthBot
-                </span>
-              </h1>
-              <div className="w-24 h-1 bg-troy-red mx-auto rounded-full"></div>
+          <section className="py-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-5xl">
+              {FEATURES.map((feature) => (
+                <div key={feature.title} className="flex items-start gap-3">
+                  <span className="text-troy-red text-2xl mt-0.5">
+                    {feature.icon}
+                  </span>
+                  <div>
+                    <h3 className="font-semibold text-troy-ink text-xl">
+                      {feature.title}
+                    </h3>
+                    <p className="text-md text-troy-ink/70">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
+          </section>
 
-            {/* Subtitle */}
-            <p className="max-w-2xl mx-auto text-lg sm:text-xl lg:text-2xl leading-relaxed text-gray-200">
-              Your AI-powered health assistant providing trusted medical
-              insights and personalized guidance for Troy University students.
+          <div className="flex flex-wrap gap-10 mt-6">
+            <Link
+              to="/login"
+              className="bg-white text-troy-red font-semibold px-6 py-3 hover:bg-troy-white/90 transition-colors font-mono"
+            >
+              Start a conversation
+            </Link>
+            <Link
+              to="/signup"
+              className="bg-white text-troy-red font-semibold px-6 py-3 hover:bg-troy-white/90 transition-colors font-mono"
+            >
+              Create account
+            </Link>
+          </div>
+
+          <div className="max-w-5xl mt-10 p-3 rounded-xl">
+            <p className="text-md text-yellow-200">
+              <span className="font-semibold">
+                <WarningOutlined /> Note:
+              </span>{" "}
+              This AI assistant provides general guidance only. Always consult a
+              healthcare professional for medical advice.
             </p>
-
-            {/* Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto text-sm sm:text-base">
-              <div className="flex flex-col items-center space-y-2 p-4 bg-white/10 backdrop-blur-sm rounded-lg">
-                <div className="w-12 h-12 bg-troy-red rounded-full flex items-center justify-center">
-                  <span className="text-xl">
-                    <HourglassOutlined />
-                  </span>
-                </div>
-                <h3 className="font-semibold">AI-Powered</h3>
-                <p className="text-gray-300 text-center">
-                  Advanced machine learning for accurate health insights
-                </p>
-              </div>
-              <div className="flex flex-col items-center space-y-2 p-4 bg-white/10 backdrop-blur-sm rounded-lg">
-                <div className="w-12 h-12 bg-troy-red rounded-full flex items-center justify-center">
-                  <span className="text-xl">
-                    <LockOutlined />
-                  </span>
-                </div>
-                <h3 className="font-semibold">Secure & Private</h3>
-                <p className="text-gray-300 text-center">
-                  Your health information stays confidential
-                </p>
-              </div>
-              <div className="flex flex-col items-center space-y-2 p-4 bg-white/10 backdrop-blur-sm rounded-lg">
-                <div className="w-12 h-12 bg-troy-red rounded-full flex items-center justify-center">
-                  <span className="text-xl">
-                    <ThunderboltOutlined />
-                  </span>
-                </div>
-                <h3 className="font-semibold">24/7 Available</h3>
-                <p className="text-gray-300 text-center">
-                  Get health guidance anytime, anywhere
-                </p>
-              </div>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link
-                to="/login"
-                className="w-full sm:w-auto bg-troy-red hover:bg-troy-dark text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-lg"
-              >
-                Get Started Now
-              </Link>
-              <Link
-                to="/signup"
-                className="w-full sm:w-auto bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 border border-white/20 hover:border-white/40 text-lg"
-              >
-                Create Account
-              </Link>
-            </div>
-
-            {/* Disclaimer */}
-            <div className="mt-8 p-4 bg-yellow-500/20 backdrop-blur-sm rounded-lg border border-yellow-300/30">
-              <p className="text-sm text-yellow-100 flex items-center justify-center gap-2">
-                <span className="text-lg">⚠️</span>
-                This AI assistant provides general guidance only. Always consult
-                a healthcare professional for medical advice.
-              </p>
-            </div>
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse"></div>
-          </div>
+        {/* Hero image - fills the column height, cropped rather than stretched */}
+        <div className="hidden lg:block h-full">
+          <img
+            src={hero}
+            alt="Student using Troy HealthLink on a laptop"
+            className="w-full h-full object-cover grayscale"
+          />
         </div>
       </section>
     </div>

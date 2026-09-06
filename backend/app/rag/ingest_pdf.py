@@ -15,7 +15,6 @@ from openai import OpenAI
 
 load_dotenv()
 
-
 # Set up logging
 logger = logging.getLogger(__name__)
 
@@ -53,6 +52,7 @@ except ImportError:
         "Also install Tesseract OCR: https://github.com/tesseract-ocr/tesseract"
     )
 
+
 # Initialize Supabase client (pgvector storage)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from supabase_client import get_supabase_client
@@ -63,23 +63,22 @@ supabase = get_supabase_client()
 def extract_text_with_ocr(pdf_path: str, dpi: int = 300) -> str:
     """
     Extract text from PDF using OCR (for scanned/image-based PDFs).
-
     Args:
-        pdf_path: Path to PDF file
-        dpi: DPI for image conversion (higher = better quality, slower)
-
+    - pdf_path: Path to PDF file
+    - dpi: DPI for image conversion (higher = better quality, slower)
     Returns:
-        Extracted text from all pages
+    - Extracted text from all pages
     """
     if not OCR_AVAILABLE:
         raise ImportError(
             "OCR libraries not available. Install with: "
-            "pip install pytesseract pdf2image and install Tesseract OCR"
+            "pip install pytesseract pdf2image and install Tesseract OCR: https://github.com/tesseract-ocr/tesseract"
         )
 
     text = ""
     try:
         logger.info(f"Converting PDF to images for OCR (DPI: {dpi})...")
+
         # Convert PDF pages to images
         images = convert_from_path(pdf_path, dpi=dpi)
         logger.info(f"Converted {len(images)} pages to images")
@@ -102,15 +101,13 @@ def extract_text_from_pdf(
 ) -> str:
     """
     Extract text from a PDF file.
-
     Args:
-        pdf_path: Path to PDF file
-        use_ocr: If True, use OCR directly (skip text extraction)
-        ocr_fallback: If True, fall back to OCR if text extraction yields little/no text
-        ocr_dpi: DPI for OCR image conversion (if OCR is used)
-
+    - pdf_path: Path to PDF file
+    - use_ocr: If True, use OCR directly (skip text extraction)
+    - ocr_fallback: If True, fall back to OCR if text extraction yields little/no text
+    - ocr_dpi: DPI for OCR image conversion (if OCR is used)
     Returns:
-        Extracted text from all pages
+    - Extracted text from all pages
     """
     text = ""
 
@@ -170,8 +167,7 @@ def extract_text_from_pdf(
     if use_ocr or (ocr_fallback and OCR_AVAILABLE):
         if not OCR_AVAILABLE:
             raise ImportError(
-                "OCR requested but libraries not available. Install with: "
-                "pip install pytesseract pdf2image and install Tesseract OCR"
+                "OCR requested but libraries not available. Install with: pip install pytesseract pdf2image and install Tesseract OCR: https://github.com/tesseract-ocr/tesseract"
             )
         logger.info("Using OCR for text extraction...")
         return extract_text_with_ocr(pdf_path, dpi=ocr_dpi)
@@ -183,7 +179,11 @@ def extract_text_from_pdf(
     )
 
 
-def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
+def chunk_text(
+    text: str, 
+    chunk_size: int = 1000, 
+    overlap: int = 200
+) -> List[str]:
     """Split text into overlapping chunks."""
     chunks = []
     words = text.split()
@@ -213,23 +213,25 @@ def ingest_pdf(
 ) -> Dict:
     """
     Ingest a PDF: extract, chunk, embed, and store in vector database.
-
     Args:
-        pdf_path: Path to PDF file
-        use_ocr: If True, use OCR directly (skip text extraction)
-        ocr_fallback: If True, fall back to OCR if text extraction yields little/no text
-        ocr_dpi: DPI for OCR image conversion (higher = better quality, slower)
-        chunk_size: Size of text chunks in characters
-        chunk_overlap: Overlap between chunks in characters
-
+    - pdf_path: Path to PDF file
+    - use_ocr: If True, use OCR directly (skip text extraction)
+    - ocr_fallback: If True, fall back to OCR if text extraction yields little/no text
+    - ocr_dpi: DPI for OCR image conversion (higher = better quality, slower)
+    - chunk_size: Size of text chunks in characters
+    - chunk_overlap: Overlap between chunks in characters
     Returns:
         dict with number of chunks ingested and extraction method used
     """
     # Extract text (with optional OCR)
     extraction_method = "ocr" if use_ocr else "text"
+    
     try:
         text = extract_text_from_pdf(
-            pdf_path, use_ocr=use_ocr, ocr_fallback=ocr_fallback, ocr_dpi=ocr_dpi
+            pdf_path, 
+            use_ocr=use_ocr, 
+            ocr_fallback=ocr_fallback, 
+            ocr_dpi=ocr_dpi
         )
         if ocr_fallback and not use_ocr:
             # Check if OCR was actually used (by checking if text length suggests OCR)

@@ -16,7 +16,7 @@ import logging
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from model import train_model, load_model
 from auth_utils import ALLOW_UNAUTHENTICATED_TRAIN
-from routers.utils import verify_user_token
+from db import verify_user_token
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -139,7 +139,7 @@ async def train(
             else:
                 files_saved[file_key] = {"path": file_path, "status": "missing"}
                 all_files_saved = False
-                logger.error(f"✗ {file_name} not found after training")
+                logger.error(f"{file_name} not found after training")
 
         if not all_files_saved:
             logger.warning("Some required files were not saved during training")
