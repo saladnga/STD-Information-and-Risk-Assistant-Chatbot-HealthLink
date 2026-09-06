@@ -59,8 +59,11 @@ class ResetPasswordRequest(BaseModel):
 
 
 def _signup_sync(request: SignupRequest):
-    supabase = get_supabase_client()
-    auth_res = supabase.auth.sign_up(
+    auth_client = create_client(
+        os.getenv("VITE_SUPABASE_URL"),
+        os.getenv("VITE_SUPABASE_ANON_KEY"),
+    )
+    auth_res = auth_client.auth.sign_up(
         {
             "email": request.email,
             "password": request.password,
@@ -86,6 +89,7 @@ def _signup_sync(request: SignupRequest):
     }
 
     # Insert profile with service role (bypasses RLS)
+    supabase = get_supabase_client()
     try:
         profile_result = supabase.table("user_profiles").insert(profile_data).execute()
 
@@ -160,9 +164,12 @@ async def signup(request: SignupRequest):
 
 
 def _login_sync(request: LoginRequest):
-    supabase = get_supabase_client()
-
-    auth_res = supabase.auth.sign_in_with_password(
+    # Fresh client, not the shared one - signing in on the shared client makes supabase-py silently swap its Authorization header to this user's own token, breaking every other request using it afterward.
+    auth_client = create_client(
+        os.getenv("VITE_SUPABASE_URL"),
+        os.getenv("VITE_SUPABASE_ANON_KEY"),
+    )
+    auth_res = auth_client.auth.sign_in_with_password(
         {"email": request.email, "password": request.password}
     )
 
@@ -177,6 +184,7 @@ def _login_sync(request: LoginRequest):
             detail="Authentication failed. Please verify your email or try again.",
         )
 
+    supabase = get_supabase_client()
     profile_res = (
         supabase.table("user_profiles")
         .select("*")
