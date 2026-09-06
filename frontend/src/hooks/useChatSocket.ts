@@ -86,6 +86,12 @@ export function useChatSocket({
         return;
       }
 
+      // Keepalive during a slow/silent reply (RAG lookup, a fully-buffered
+      // LLM call) - nothing to render, just proof the connection is alive.
+      if (chunk === "__PING__") {
+        return;
+      }
+
       if (chunk === "__DONE__") {
         setIsTyping(false);
         isStreamingRef.current = false;
